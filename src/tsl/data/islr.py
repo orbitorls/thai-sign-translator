@@ -68,7 +68,14 @@ class ISLRDataset(torch.utils.data.Dataset):
         return len(self._paths)
 
     def __getitem__(self, i: int) -> tuple[torch.Tensor, int]:
-        abs_path = os.path.join(self.parquet_dir, self._paths[i])
+        rel = self._paths[i]
+        abs_path = os.path.join(self.parquet_dir, rel)
+        # Real ISLR's train.csv includes the leading "train_landmark_files/"
+        # in its path column. If the caller already passed the parent dir
+        # as parquet_dir, joining the raw path double-prefixes; try the
+        # stripped version only if the original doesn't exist.
+        if not os.path.exists(abs_path) and rel.startswith("train_landmark_files/"):
+            abs_path = os.path.join(self.parquet_dir, rel[len("train_landmark_files/"):])
         raw = load_islr_sequence(abs_path)
         norm = normalize_sequence(raw)
         x = torch.from_numpy(norm)

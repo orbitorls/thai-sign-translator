@@ -3,6 +3,8 @@ from __future__ import annotations
 
 import argparse
 
+import numpy as np
+
 from tsl.eval.metrics import accuracy, confusion_matrix_fig, topk_accuracy
 
 
@@ -12,10 +14,17 @@ def evaluate_track(store, clips, true_words, label_to_id, out_png=None) -> dict:
     label_names = sorted(label_to_id, key=lambda w: label_to_id[w])
     y_true, y_pred, topk_preds = [], [], []
     for clip, true_word in zip(clips, true_words):
-        pred_word, _score = store.predict(clip)
+        # Use full Recognizer-style ranking if available, else fall back to
+        # nearest-only (top-1 == top-k).
+        topk = None
+        if hasattr(store, "recognize"):
+            topk = store.recognize(clip)["topk"]
+        else:
+            topk = [store.predict(clip)]
+        pred_word = topk[0][0]
         y_true.append(label_to_id[true_word])
         y_pred.append(label_to_id.get(pred_word, -1))
-        topk_preds.append([label_to_id.get(pred_word, -1)])
+        topk_preds.append([label_to_id.get(w, -1) for w, _ in topk])
     acc = accuracy(y_true, y_pred)
     top5 = topk_accuracy(y_true, topk_preds, k=5)
     if out_png is not None:
@@ -40,29 +49,46 @@ def build_thai_track(encoder, thai_root: str):
     return store, query, true_words, label_to_id
 
 
+def _trim_padded(seq: np.ndarray) -> np.ndarray:
+    """Strip trailing zero-padded frames added by collate_pad."""
+    arr = np.asarray(seq)
+    nonzero = (arr.abs().sum(axis=-1) > 0)
+    t = int(nonzero.sum())
+    return arr[:t]
+
+
 def build_asl_track(encoder, parquet_dir, csv_path, classes, k_shot=5, q_query=5):
     from tsl.data.episodic import EpisodicSampler
     from tsl.data.islr import ISLRDataset
+    from tsl.inference.recognizer import Recognizer
     from tsl.registry.prototype_store import PrototypeStore
 
     dataset = ISLRDataset(parquet_dir=parquet_dir, csv_path=csv_path, classes=classes)
     n_way = dataset.num_classes
     sampler = EpisodicSampler(dataset, n_way=n_way, k_shot=k_shot, q_query=q_query, episodes=1)
     episode = next(iter(sampler))
+    # Wrap the store in a Recognizer so evaluate_track gets real top-k
+    # rankings (not just nearest-neighbor).
     store = PrototypeStore(encoder)
+    recognizer = Recognizer(store)
     label_to_id = {}
     support_x = episode["support_x"]
     support_y = episode["support_y"]
     for remapped in range(n_way):
         name = f"asl_{remapped}"
         label_to_id[name] = remapped
-        clips = [support_x[j].numpy() for j in range(support_x.shape[0]) if int(support_y[j]) == remapped]
+        # Trim padding before handing to add_sign so it sees true-length clips.
+        clips = [
+            _trim_padded(support_x[j].numpy())
+            for j in range(support_x.shape[0])
+            if int(support_y[j]) == remapped
+        ]
         store.add_sign(name, clips)
     query_x = episode["query_x"]
     query_y = episode["query_y"]
-    query_clips = [query_x[j].numpy() for j in range(query_x.shape[0])]
+    query_clips = [_trim_padded(query_x[j].numpy()) for j in range(query_x.shape[0])]
     true_words = [f"asl_{int(query_y[j])}" for j in range(query_y.shape[0])]
-    return store, query_clips, true_words, label_to_id
+    return recognizer, query_clips, true_words, label_to_id
 
 
 def run_two_track_eval(checkpoint, islr_parquet_dir, islr_csv, thai_root, held_out_classes=None, out_dir="eval_out") -> dict:

@@ -69,11 +69,13 @@ def train(
             epoch_losses.append(loss_v)
             history.append({"epoch": epoch, "episode": ep_idx, "loss": loss_v, "acc": acc_v})
         mean_loss = sum(epoch_losses) / max(len(epoch_losses), 1)
-        torch.save(encoder.state_dict(), checkpoint_path)
+        # Always write a per-epoch checkpoint (overwrites the last) for
+        # disconnect-survival; the BEST checkpoint goes to checkpoint_path
+        # (never overwritten by a worse epoch).
+        torch.save(encoder.state_dict(), export_path)
         if mean_loss < best_loss:
             best_loss = mean_loss
             torch.save(encoder.state_dict(), checkpoint_path)
-    torch.save(encoder.state_dict(), export_path)
     return history
 
 
