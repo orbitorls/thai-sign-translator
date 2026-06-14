@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Thai Sign Translator</title>
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 2rem; }
+    #video { width: 480px; height: 360px; background: #000; transform: scaleX(-1); }
+    #result { font-size: 1.5rem; margin-top: 1rem; }
+    #topk { color: #555; font-size: 1rem; }
+    button { font-size: 1rem; padding: 0.5rem 1rem; margin-right: 0.5rem; }
+    .recording { color: #c00; font-weight: bold; }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/holistic/holistic.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+</head>
+<body>
+  <h1>Thai Sign Translator</h1>
+  <video id="video" autoplay playsinline muted></video>
+  <div>
+    <button id="recordBtn">Start recording</button>
+    <span id="status"></span>
+  </div>
+  <div id="result">—</div>
+  <div id="topk"></div>
+  <script src="/static/app.js"></script>
+</body>
+</html>
