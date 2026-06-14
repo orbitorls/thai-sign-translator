@@ -8,6 +8,7 @@ short cross-entropy training loop with teacher forcing (the model's
 Outputs in ``--out-dir``:
     - ``slt_model.pt``        : model ``state_dict``
     - ``tokenizer.json``      : serialized :class:`CharTokenizer`
+    - ``model_config.json``   : constructor kwargs needed to rebuild the model
     - ``train_metrics.json``  : per-epoch losses + final train loss
 """
 from __future__ import annotations
@@ -52,18 +53,32 @@ def _right_shift_target(tgt: torch.Tensor, bos_id: int) -> torch.Tensor:
     return shifted
 
 
+_MODEL_KWARGS: dict = {
+    "input_dim": _INPUT_DIM,
+    "d_model": 64,
+    "nhead": 4,
+    "num_encoder_layers": 2,
+    "num_decoder_layers": 2,
+    "dim_feedforward": 128,
+    "dropout": 0.1,
+    "max_pos_len": 1024,
+}
+
+
 def _build_model(vocab_size: int) -> SignToTextTransformer:
     """Build a small :class:`SignToTextTransformer` for smoke + training."""
-    return SignToTextTransformer(
-        input_dim=_INPUT_DIM,
-        vocab_size=vocab_size,
-        d_model=64,
-        nhead=4,
-        num_encoder_layers=2,
-        num_decoder_layers=2,
-        dim_feedforward=128,
-        dropout=0.1,
-    )
+    return SignToTextTransformer(vocab_size=vocab_size, **_MODEL_KWARGS)
+
+
+def _save_model_config(vocab_size: int, path: str) -> None:
+    """Write the constructor kwargs (incl. ``vocab_size``) to ``path`` as JSON.
+
+    The inference wrapper reads this file to rebuild the model from a
+    checkpoint without having to re-derive the architecture defaults.
+    """
+    config = {**_MODEL_KWARGS, "vocab_size": vocab_size}
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(config, f, ensure_ascii=False, indent=2)
 
 
 def _save_tokenizer(tok: CharTokenizer, path: str) -> None:
@@ -288,6 +303,7 @@ def main(argv: list[str] | None = None) -> int:
 
     torch.save(model.state_dict(), os.path.join(args.out_dir, "slt_model.pt"))
     _save_tokenizer(tokenizer, os.path.join(args.out_dir, "tokenizer.json"))
+    _save_model_config(tokenizer.vocab_size, os.path.join(args.out_dir, "model_config.json"))
     _save_metrics(metrics, os.path.join(args.out_dir, "train_metrics.json"))
     return 0
 

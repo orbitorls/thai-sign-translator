@@ -236,6 +236,7 @@ def test_train_script_smoke(tmp_path, monkeypatch):
 
     assert (out_dir / "slt_model.pt").exists()
     assert (out_dir / "tokenizer.json").exists()
+    assert (out_dir / "model_config.json").exists()
     assert (out_dir / "train_metrics.json").exists()
 
     # The metrics file must be valid JSON with the required keys.
