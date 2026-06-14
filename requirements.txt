@@ -1,0 +1,13 @@
+# Pinned-ish dependency set. CPU inference + webcam on laptop; GPU training on Colab/Kaggle.
+torch>=2.2.0
+mediapipe>=0.10.9
+fastapi>=0.110.0
+uvicorn>=0.29.0
+numpy>=1.26.0
+pandas>=2.2.0
+pyarrow>=15.0.0
+pytest>=8.0.0
+fastdtw>=0.3.4
+scikit-learn>=1.4.0
+matplotlib>=3.8.0
+pydantic>=2.6.0
