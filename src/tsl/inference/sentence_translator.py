@@ -2,50 +2,30 @@
 
 SentenceTranslator loads a :class:`tsl.models.slt.SignToTextTransformer`
 from a checkpoint directory produced by :mod:`tsl.train.train_slt` and
-runs greedy decoding on a ``(T, D)`` landmark feature array.
-
-Layout expected inside ``checkpoint_dir``:
-    - ``slt_model.pt``        : model ``state_dict``
-    - ``tokenizer.json``      : serialized :class:`CharTokenizer`
-    - ``model_config.json``   : constructor kwargs (incl. ``vocab_size``)
-
-Public surface:
-    - :class:`SentencePrediction`: dataclass with ``sentence``, ``token_ids``, ``score``.
-    - :class:`SentenceTranslator`: load + :meth:`translate` a single sequence.
+runs greedy decoding on a ``(T, D)`` landmark feature array, returning
+the decoded Thai sentence and a token-level confidence score.
 """
 from __future__ import annotations
 
 import json
-import math
 import os
 from dataclasses import dataclass
 
 import numpy as np
 import torch
+import torch.nn.functional as F
 
 from tsl.models.slt import SignToTextTransformer
 from tsl.text.tokenizer import CharTokenizer
 from tsl.train.train_slt import load_tokenizer
 
+
 __all__ = ["SentencePrediction", "SentenceTranslator"]
-
-
-_MODEL_FILENAME = "slt_model.pt"
-_TOKENIZER_FILENAME = "tokenizer.json"
-_CONFIG_FILENAME = "model_config.json"
 
 
 @dataclass
 class SentencePrediction:
-    """Result of a single greedy decode.
-
-    Attributes:
-        sentence: Decoded Thai sentence (special tokens stripped).
-        token_ids: The generated token ids (including the leading ``<bos>``
-            and the trailing ``<eos>`` when the model emits it).
-        score: Mean per-step probability of the chosen tokens, clipped to
-            ``[0.0, 1.0]``. ``0.0`` for empty / fully-empty sequences.
-    """
+    """Result of a single :meth:`SentenceTranslator.translate` call."""
 
     sentence: str
     token_ids: list[int]
@@ -53,124 +33,117 @@ class SentencePrediction:
 
 
 class SentenceTranslator:
-    """Wraps a :class:`SignToTextTransformer` for one-shot inference.
+    """Loads an SLT checkpoint and decodes a landmark sequence to a Thai sentence.
 
-    Loads the model state-dict, tokenizer and config from ``checkpoint_dir``
-    on construction. The model is held in eval mode on CPU; the same
-    instance can be reused for many calls.
+    The constructor switches the model into ``eval`` mode and moves it to
+    the requested device; it never re-enters training mode for the
+    lifetime of the instance.
     """
 
+    _CONFIG_FILENAME = "model_config.json"
+    _STATE_FILENAME = "slt_model.pt"
+    _TOKENIZER_FILENAME = "tokenizer.json"
+
     def __init__(self, checkpoint_dir: str, device: str = "cpu") -> None:
-        if not os.path.isdir(checkpoint_dir):
-            raise FileNotFoundError(
-                f"SLT checkpoint directory not found: {checkpoint_dir!r}"
-            )
-        model_path = os.path.join(checkpoint_dir, _MODEL_FILENAME)
-        tok_path = os.path.join(checkpoint_dir, _TOKENIZER_FILENAME)
-        cfg_path = os.path.join(checkpoint_dir, _CONFIG_FILENAME)
-        for p in (model_path, tok_path, cfg_path):
-            if not os.path.isfile(p):
+        config_path = os.path.join(checkpoint_dir, self._CONFIG_FILENAME)
+        state_path = os.path.join(checkpoint_dir, self._STATE_FILENAME)
+        tokenizer_path = os.path.join(checkpoint_dir, self._TOKENIZER_FILENAME)
+        for path, name in (
+            (config_path, self._CONFIG_FILENAME),
+            (state_path, self._STATE_FILENAME),
+            (tokenizer_path, self._TOKENIZER_FILENAME),
+        ):
+            if not os.path.isfile(path):
                 raise FileNotFoundError(
-                    f"SLT checkpoint file missing: {p!r}"
+                    f"{name} not found in checkpoint_dir={checkpoint_dir!r} "
+                    f"(expected at {path!r})"
                 )
 
-        with open(cfg_path, "r", encoding="utf-8") as f:
-            cfg = json.load(f)
-        if "vocab_size" not in cfg:
-            raise ValueError(
-                f"SLT model config missing 'vocab_size': {cfg_path!r}"
-            )
+        with open(config_path, "r", encoding="utf-8") as f:
+            config = json.load(f)
 
-        self.tokenizer: CharTokenizer = load_tokenizer(tok_path)
-        self.checkpoint_dir = checkpoint_dir
-        self.device = device
-        self.model = SignToTextTransformer(**cfg)
-        state = torch.load(model_path, map_location="cpu", weights_only=True)
+        self.model = SignToTextTransformer(**config)
+        state = torch.load(state_path, map_location=device)
         self.model.load_state_dict(state)
         self.model.eval()
         self.model.to(device)
 
-    def _to_tensor(self, features: np.ndarray) -> torch.Tensor:
-        if not isinstance(features, np.ndarray):
-            features = np.asarray(features, dtype=np.float32)
+        self.tokenizer = load_tokenizer(tokenizer_path)
+        self.device = device
+
+    @classmethod
+    def from_model_and_tokenizer(
+        cls,
+        model: SignToTextTransformer,
+        tokenizer: CharTokenizer,
+        device: str = "cpu",
+    ) -> "SentenceTranslator":
+        """Build a translator from in-memory objects (skips file I/O)."""
+        instance = cls.__new__(cls)
+        instance.model = model.to(device)
+        instance.model.eval()
+        instance.tokenizer = tokenizer
+        instance.device = device
+        return instance
+
+    @torch.no_grad()
+    def translate(self, features: np.ndarray, max_len: int = 128) -> SentencePrediction:
+        """Decode ``features`` (``(T, D)`` float32) to a Thai sentence.
+
+        Returns a :class:`SentencePrediction` with the decoded text, the
+        raw token ids (including the leading ``<bos>`` and any trailing
+        ``<eos>``), and a mean softmax-probability confidence in
+        ``[0.0, 1.0]`` (or ``0.0`` if there is nothing to score).
+        """
         if features.ndim != 2:
             raise ValueError(
-                f"features must be 2-D (T, D), got shape {features.shape!r}"
+                f"features must be 2-D (T, D); got shape {tuple(features.shape)}"
             )
-        T = int(features.shape[0])
-        src = torch.from_numpy(features.astype(np.float32, copy=False)).unsqueeze(0)
-        lengths = torch.tensor([T], dtype=torch.long)
-        return src, lengths
-
-    def translate(
-        self,
-        features: np.ndarray,
-        max_len: int = 128,
-    ) -> SentencePrediction:
-        """Greedy-decode a single ``(T, D)`` feature sequence to a Thai sentence.
-
-        Args:
-            features: ``(T, D)`` float32 array of landmark features.
-            max_len: Maximum number of decoder steps (inclusive of ``<bos>``).
-
-        Returns:
-            A :class:`SentencePrediction` with the decoded sentence, raw
-            token ids and a mean-probability score in ``[0, 1]``.
-
-        Raises:
-            ValueError: If ``features`` is not a 2-D array or ``max_len < 1``.
-        """
-        if not isinstance(max_len, int) or max_len < 1:
-            raise ValueError(f"max_len must be a positive int, got {max_len!r}")
-
-        src, lengths = self._to_tensor(features)
-        T = int(src.size(1))
+        T = features.shape[0]
         if T == 0:
             return SentencePrediction(sentence="", token_ids=[], score=0.0)
 
+        src = torch.as_tensor(
+            features, dtype=torch.float32, device=self.device
+        ).unsqueeze(0)
+        src_lengths = torch.tensor([T], dtype=torch.long, device=self.device)
+
         bos_id = self.tokenizer.bos_id
         eos_id = self.tokenizer.eos_id
+        pad_id = self.tokenizer.pad_id
 
-        with torch.no_grad():
-            memory = self.model.encode(src, lengths)
-            memory_key_padding_mask = self.model._build_src_pad_mask(src, lengths)
-            decoded = torch.full((1, 1), bos_id, dtype=torch.long)
-            log_probs: list[float] = []
-            finished = torch.zeros(1, dtype=torch.bool)
-            for _ in range(max_len - 1):
-                T_tgt = decoded.size(1)
-                tgt_mask = torch.nn.Transformer.generate_square_subsequent_mask(
-                    T_tgt, device=decoded.device, dtype=memory.dtype
-                )
-                h = self.model.tgt_embed(decoded)
-                h = self.model.tgt_pos_enc(h)
-                h = self.model.decoder(
-                    tgt=h,
-                    memory=memory,
-                    tgt_mask=tgt_mask,
-                    memory_key_padding_mask=memory_key_padding_mask,
-                )
-                logits = self.model.out_proj(h[:, -1, :])
-                probs = torch.softmax(logits, dim=-1)
-                next_token = int(probs.argmax(dim=-1).item())
-                log_probs.append(float(probs[0, next_token].log().item()))
-                next_t = torch.tensor([[next_token]], dtype=torch.long)
-                next_t = torch.where(
-                    finished, torch.full_like(next_t, eos_id), next_t
-                )
-                decoded = torch.cat([decoded, next_t], dim=1)
-                finished = finished | (next_token == eos_id)
-                if finished.item():
-                    break
-
-        token_ids = [int(i) for i in decoded.squeeze(0).tolist()]
-        sentence = self.tokenizer.decode(token_ids, strip_special=True)
-        if log_probs:
-            mean_log_prob = sum(log_probs) / len(log_probs)
-            score = float(math.exp(mean_log_prob))
-        else:
-            score = 0.0
-        score = max(0.0, min(1.0, score))
-        return SentencePrediction(
-            sentence=sentence, token_ids=token_ids, score=score
+        decoded = self.model.greedy_decode(
+            src, src_lengths, bos_id, eos_id, max_len
         )
+        ids = decoded[0].tolist()
+        sentence = self.tokenizer.decode(ids, strip_special=True)
+        score = self._score_sequence(src, src_lengths, ids, pad_id)
+        return SentencePrediction(sentence=sentence, token_ids=ids, score=score)
+
+    def _score_sequence(
+        self,
+        src: torch.Tensor,
+        src_lengths: torch.Tensor,
+        ids: list[int],
+        pad_id: int,
+    ) -> float:
+        """Mean softmax probability of the greedy tokens (excluding ``<pad>``).
+
+        Runs a single teacher-forcing forward pass with
+        ``tgt = ids[:-1]`` and reads off the probability of the
+        actually-decoded next token at each position. Positions whose
+        target is ``pad_id`` are masked out of the average.
+        """
+        if len(ids) <= 1:
+            return 0.0
+        ids_tensor = torch.tensor([ids], dtype=torch.long, device=self.device)
+        tgt = ids_tensor[:, :-1]
+        logits = self.model(src, src_lengths, tgt)
+        probs = F.softmax(logits, dim=-1)
+        next_ids = ids_tensor[:, 1:]
+        gathered = probs.gather(-1, next_ids.unsqueeze(-1)).squeeze(-1)
+        mask = (next_ids != pad_id).float()
+        denom = float(mask.sum().item())
+        if denom <= 0.0:
+            return 0.0
+        return float((gathered * mask).sum().item() / denom)

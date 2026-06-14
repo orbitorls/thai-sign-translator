@@ -35,3 +35,7 @@ CHECKPOINT_DIR = os.path.join(ROOT_DIR, "checkpoints")
 ENCODER_WEIGHTS_PATH = os.path.join(CHECKPOINT_DIR, "encoder.pt")
 # Saved/loaded with torch.save/torch.load (see PrototypeStore.save), so use .pt.
 PROTOTYPE_STORE_PATH = os.path.join(CHECKPOINT_DIR, "prototypes.pt")
+# Sign-to-text (SLT) Transformer checkpoint directory. The training script
+# populates this with ``slt_model.pt``, ``tokenizer.json`` and
+# ``model_config.json``; the inference wrapper reads them back lazily.
+SLT_CHECKPOINT_DIR = os.path.join(CHECKPOINT_DIR, "slt")

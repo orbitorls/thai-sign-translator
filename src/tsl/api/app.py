@@ -21,7 +21,7 @@ from pathlib import Path
 
 import numpy as np
 import torch
-from fastapi import Depends, FastAPI
+from fastapi import Depends, FastAPI, HTTPException
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
@@ -31,9 +31,12 @@ from tsl.api.schemas import (
     PredictResponse,
     TrainSignRequest,
     TrainSignResponse,
+    TranslateSentenceRequest,
+    TranslateSentenceResponse,
 )
 from tsl.features.normalize import SELECTED_LANDMARKS, normalize_sequence
 from tsl.inference.recognizer import Recognizer
+from tsl.inference.sentence_translator import SentenceTranslator
 from tsl.models.encoder import LandmarkEncoder
 from tsl.registry.prototype_store import PrototypeStore
 
@@ -50,6 +53,7 @@ def index() -> FileResponse:
 
 _store: PrototypeStore | None = None
 _recognizer: Recognizer | None = None
+_translator: SentenceTranslator | None = None
 
 
 def _build_encoder() -> LandmarkEncoder:
@@ -84,6 +88,19 @@ def get_recognizer() -> Recognizer:
     if _recognizer is None:
         _recognizer = Recognizer(get_store())
     return _recognizer
+
+
+def get_sentence_translator() -> SentenceTranslator:
+    global _translator
+    if _translator is None:
+        try:
+            _translator = SentenceTranslator(config.SLT_CHECKPOINT_DIR)
+        except FileNotFoundError as e:
+            raise HTTPException(
+                status_code=503,
+                detail="SLT checkpoint not found; train a model first",
+            ) from e
+    return _translator
 
 
 def _raw_frames_to_array(frames) -> np.ndarray:
@@ -129,6 +146,57 @@ def train_custom_sign(
 @app.get("/signs")
 def list_signs(store: PrototypeStore = Depends(get_store)) -> dict:
     return {"signs": store.names()}
+
+
+@app.post("/translate-sentence", response_model=TranslateSentenceResponse)
+def translate_sentence(
+    req: TranslateSentenceRequest,
+    translator: SentenceTranslator = Depends(get_sentence_translator),
+) -> TranslateSentenceResponse:
+    if not req.frames:
+        return TranslateSentenceResponse(sentence="", tokens=[], score=0.0)
+    try:
+        arr = np.asarray(req.frames, dtype=np.float32)
+    except (TypeError, ValueError) as e:
+        raise HTTPException(status_code=400, detail=f"could not parse frames: {e}") from e
+    if arr.ndim != 2:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                f"frames must be a 2-D list (T, feature_dim); got array shape "
+                f"{arr.shape!r}"
+            ),
+        )
+    if arr.shape[0] == 0:
+        return TranslateSentenceResponse(sentence="", tokens=[], score=0.0)
+    if arr.shape[1] != req.feature_dim:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                f"feature_dim mismatch: each frame has {arr.shape[1]} floats but "
+                f"feature_dim={req.feature_dim}"
+            ),
+        )
+    if arr.size % req.feature_dim != 0:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                f"flat float count {arr.size} is not divisible by feature_dim={req.feature_dim}"
+            ),
+        )
+    features = arr.reshape(arr.shape[0], req.feature_dim)
+    try:
+        pred = translator.translate(features, max_len=req.max_len)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
+    except FileNotFoundError as e:
+        raise HTTPException(
+            status_code=503,
+            detail="SLT checkpoint not found; train a model first",
+        ) from e
+    return TranslateSentenceResponse(
+        sentence=pred.sentence, tokens=pred.token_ids, score=pred.score
+    )
 
 
 def get_eval_fn():
