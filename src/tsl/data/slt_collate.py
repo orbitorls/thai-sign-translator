@@ -6,7 +6,7 @@ torch tensors ready to be fed to :class:`SignToTextTransformer`.
 
 Responsibilities:
     - load each example's landmark sequence via a pluggable loader
-      (default: :func:`tsl.data.tsl51.load_sentence_features`),
+      (default: :func:`tsl.data.tsl51.load_landmark_sequence`),
     - encode each example's ``target_text`` into char ids with the
       tokenizer and pad to a uniform ``(B, T_tgt_max)`` matrix with
       ``<bos>`` / ``<eos>`` framing,
@@ -29,7 +29,7 @@ import numpy as np
 import torch
 
 from tsl.data.manifest import SignTextExample
-from tsl.data.tsl51 import load_sentence_features
+from tsl.data.tsl51 import load_landmark_sequence
 from tsl.text.tokenizer import CharTokenizer
 
 __all__ = ["SltBatch", "slt_collate"]
@@ -77,7 +77,7 @@ def slt_collate(
             ``example.target_text`` into token ids.
         load_features: Callable that takes a ``features_path`` and
             returns a ``(T, D)`` numpy array. Defaults to
-            :func:`tsl.data.tsl51.load_sentence_features`, which
+            :func:`tsl.data.tsl51.load_landmark_sequence`, which
             requires a path shaped like the TSL-51 landmark CSV.
         add_bos: If True (default), prepend ``<bos>`` to every target
             row during padding.
@@ -94,7 +94,7 @@ def slt_collate(
         raise ValueError("empty batch")
 
     if load_features is None:
-        load_features = load_sentence_features
+        load_features = load_landmark_sequence
 
     raw_seqs: list[np.ndarray] = []
     raw_lengths: list[int] = []

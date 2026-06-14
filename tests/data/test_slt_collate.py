@@ -165,3 +165,28 @@ def test_slt_collate_empty_batch_raises():
     tok = _tokenizer()
     with pytest.raises(ValueError, match="empty batch"):
         slt_collate([], tok, load_features=_load_features)
+
+
+def test_default_load_features_works_on_path(tmp_path):
+    # When the caller omits ``load_features`` the collate must fall back
+    # to a path-based loader (tsl51.load_landmark_sequence). The bug
+    # being fixed was that the default was load_sentence_features, which
+    # expects a SignTextExample object and would crash on a path string.
+    example = _make_example(tmp_path, "default", 5, "ฉัน")
+    tok = _tokenizer()
+
+    batch = slt_collate([example], tok)
+
+    assert isinstance(batch, SltBatch)
+    assert batch.src.shape[0] == 1
+    # Non-zero along the time axis (the example has 5 real frames).
+    assert int(batch.src.shape[1]) > 0
+    # Non-zero along the feature axis (load_landmark_sequence keeps
+    # _x/_y/_z columns, so D is 162 for the TSL-51 layout).
+    assert int(batch.src.shape[2]) > 0
+    assert batch.src.dtype == torch.float32
+    # The real frames are non-zero (they were populated by the loader).
+    assert torch.any(batch.src[0] != 0.0)
+    assert batch.src_lengths.tolist() == [5]
+    # Tokens still build correctly for the default-loader batch.
+    assert batch.target_texts == ["ฉัน"]
