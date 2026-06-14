@@ -63,7 +63,7 @@ class SentenceTranslator:
             config = json.load(f)
 
         self.model = SignToTextTransformer(**config)
-        state = torch.load(state_path, map_location=device)
+        state = torch.load(state_path, map_location=device, weights_only=True)
         self.model.load_state_dict(state)
         self.model.eval()
         self.model.to(device)
