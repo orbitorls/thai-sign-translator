@@ -177,6 +177,75 @@ def test_train_main_how2sign_smoke(tmp_path, monkeypatch):
     assert (out_dir / "model_config.json").exists()
 
 
+def _write_npy_manifest(root: Path, n: int = 3, source: str = "youtube_sl25") -> None:
+    lm_dir = root / "landmarks"
+    lm_dir.mkdir(parents=True, exist_ok=True)
+    import numpy as np
+
+    rows = []
+    for i in range(n):
+        seg_id = f"seg_{i:04d}"
+        npy_rel = f"landmarks/{seg_id}.npy"
+        arr = np.random.randn(10, 162).astype("float32")
+        np.save(str(root / npy_rel), arr)
+        split = "val" if i == 0 else "train"
+        rows.append({
+            "segment_id": seg_id, "npy_path": npy_rel,
+            "text": f"ประโยค{i}", "video_id": f"vid_{i}",
+            "start_ms": 0, "end_ms": 5000, "split": split,
+        })
+    pd.DataFrame(rows).to_csv(root / "manifest.csv", index=False)
+
+
+def test_load_data_youtube_sl25(tmp_path):
+    data_root = tmp_path / "ytsl25"
+    _write_npy_manifest(data_root, n=5)
+    from tsl.train.train_slt import _load_data
+    train_ex, val_ex, load_fn = _load_data("youtube_sl25", str(data_root), None)
+    assert len(train_ex) > 0
+    assert len(val_ex) > 0
+    feat = load_fn(train_ex[0].features_path)
+    assert feat.shape == (10, 162)
+
+
+def test_load_data_combined(tmp_path):
+    tsl51_root = tmp_path / "tsl51"
+    meta_dir = tsl51_root / "metadata"
+    meta_dir.mkdir(parents=True, exist_ok=True)
+    lm_dir = tsl51_root / "landmarks" / "user_sentence"
+    lm_dir.mkdir(parents=True, exist_ok=True)
+    from tests.train.test_train_slt import _write_landmark_csv
+    rows_tsl51 = []
+    for i in range(4):
+        vid = f"v{i}"
+        rows_tsl51.append({
+            "video_id": vid, "sentence_id": i,
+            "sentence_clean": f"คำ{i}", "landmark_path": f"landmarks/user_sentence/{vid}.csv",
+            "video_path": f"videos/{vid}.mp4",
+        })
+        _write_landmark_csv(lm_dir / f"{vid}.csv", n_frames=5)
+    pd.DataFrame(rows_tsl51, columns=["video_id","sentence_id","sentence_clean","landmark_path","video_path"]).to_csv(
+        meta_dir / "sentence_metadata.csv", index=False)
+
+    ytsl25_root = tmp_path / "ytsl25"
+    _write_npy_manifest(ytsl25_root, n=4)
+
+    from tsl.train.train_slt import _load_data
+    data_root = f"{tsl51_root},{ytsl25_root}"
+    train_ex, val_ex, load_fn = _load_data("combined", data_root, None)
+    assert len(train_ex) > 0
+    assert len(val_ex) > 0
+    sources = {ex.source for ex in train_ex + val_ex}
+    assert "tsl51" in sources
+    assert "youtube_sl25" in sources
+    tsl51_ex = next(ex for ex in train_ex if ex.source == "tsl51")
+    yt_ex = next(ex for ex in train_ex if ex.source == "youtube_sl25")
+    feat_tsl51 = load_fn(tsl51_ex.features_path)
+    feat_yt = load_fn(yt_ex.features_path)
+    assert feat_tsl51.ndim == 2
+    assert feat_yt.ndim == 2
+
+
 def test_train_main_finetune_smoke(tmp_path, monkeypatch):
     from tsl.train import train_slt as train_mod
 
