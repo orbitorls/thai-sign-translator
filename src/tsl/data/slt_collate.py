@@ -67,6 +67,7 @@ def slt_collate(
     load_features: Callable[[str], np.ndarray] | None = None,
     add_bos: bool = True,
     add_eos: bool = True,
+    max_src_len: int | None = None,
 ) -> SltBatch:
     """Build a padded training batch from sentence-level examples.
 
@@ -106,6 +107,8 @@ def slt_collate(
                 f"features for {ex.example_id!r} must be 2-D (T, D), "
                 f"got shape {arr.shape!r}"
             )
+        if max_src_len is not None and arr.shape[0] > max_src_len:
+            arr = arr[:max_src_len]
         if arr.shape[0] == 0:
             # Promote an empty (T=0) sequence to a single zero frame so
             # the batch keeps a consistent shape. src_length stays 0.

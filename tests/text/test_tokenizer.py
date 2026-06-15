@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from tsl.text.tokenizer import SPECIAL_TOKENS, CharTokenizer
+from tsl.text.tokenizer import SPECIAL_TOKENS, CharTokenizer, WordTokenizer
 
 
 def test_special_token_ids():
@@ -169,3 +169,62 @@ def test_constructor_with_texts_fits_immediately():
     assert tok.decode([5]) == "b"
     assert tok.decode([6]) == "c"
     assert tok.decode([7]) == "d"
+
+
+# ---------------------------------------------------------------------------
+# WordTokenizer tests
+# ---------------------------------------------------------------------------
+
+def test_word_tokenizer_special_ids():
+    tok = WordTokenizer()
+    assert tok.pad_id == 0
+    assert tok.bos_id == 1
+    assert tok.eos_id == 2
+    assert tok.unk_id == 3
+
+
+def test_word_tokenizer_fit_and_vocab():
+    tok = WordTokenizer(["ฉัน กิน ข้าว", "คุณ กิน ขนมปัง"])
+    # specials(4) + unique words: ฉัน, กิน, ข้าว, คุณ, ขนมปัง = 5
+    assert tok.vocab_size == 4 + 5
+
+
+def test_word_tokenizer_encode_decode_roundtrip():
+    tok = WordTokenizer(["ฉัน กิน ข้าว"])
+    text = "ฉัน กิน ข้าว"
+    ids = tok.encode(text)
+    assert tok.decode(ids) == text
+
+
+def test_word_tokenizer_encode_with_bos_eos():
+    tok = WordTokenizer(["ฉัน กิน"])
+    ids = tok.encode("ฉัน กิน", add_bos=True, add_eos=True)
+    assert ids[0] == tok.bos_id
+    assert ids[-1] == tok.eos_id
+    assert tok.decode(ids) == "ฉัน กิน"
+
+
+def test_word_tokenizer_unk_for_unknown_word():
+    tok = WordTokenizer(["ฉัน กิน"])
+    ids = tok.encode("ฉัน กิน สวัสดี")
+    assert ids[2] == tok.unk_id
+
+
+def test_word_tokenizer_pad_to_arrays():
+    tok = WordTokenizer(["ฉัน กิน ข้าว", "สวัสดี"])
+    ids0, _ = tok.encode_batch(["ฉัน กิน ข้าว"])
+    ids1, _ = tok.encode_batch(["สวัสดี"])
+    arr, lengths = tok.pad_to_arrays(ids0[0:1] + ids1[0:1], add_bos=True, add_eos=True)
+    # long row: BOS + 3 words + EOS = 5; short row: BOS + 1 word + EOS = 3 (+2 pad)
+    assert arr.shape == (2, 5)
+    assert int(arr[0, 0]) == tok.bos_id
+    assert int(arr[0, 4]) == tok.eos_id
+    assert int(arr[1, 2]) == tok.eos_id
+    assert int(arr[1, 3]) == tok.pad_id
+
+
+def test_word_tokenizer_decode_stops_at_eos():
+    tok = WordTokenizer(["ฉัน กิน ข้าว"])
+    w1 = tok.encode("ฉัน")[0]
+    ids = [w1, tok.eos_id, tok.encode("กิน")[0]]
+    assert tok.decode(ids, strip_special=True) == "ฉัน"

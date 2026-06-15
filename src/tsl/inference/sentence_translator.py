@@ -16,7 +16,7 @@ import torch
 import torch.nn.functional as F
 
 from tsl.models.slt import SignToTextTransformer
-from tsl.text.tokenizer import CharTokenizer
+from tsl.text.tokenizer import CharTokenizer, WordTokenizer
 from tsl.train.train_slt import load_tokenizer
 
 
@@ -75,7 +75,7 @@ class SentenceTranslator:
     def from_model_and_tokenizer(
         cls,
         model: SignToTextTransformer,
-        tokenizer: CharTokenizer,
+        tokenizer: "CharTokenizer | WordTokenizer",
         device: str = "cpu",
     ) -> "SentenceTranslator":
         """Build a translator from in-memory objects (skips file I/O)."""
@@ -87,8 +87,20 @@ class SentenceTranslator:
         return instance
 
     @torch.no_grad()
-    def translate(self, features: np.ndarray, max_len: int = 128) -> SentencePrediction:
+    def translate(
+        self,
+        features: np.ndarray,
+        max_len: int = 128,
+        beam_size: int | None = None,
+        length_penalty: float = 1.0,
+    ) -> SentencePrediction:
         """Decode ``features`` (``(T, D)`` float32) to a Thai sentence.
+
+        Args:
+            features: ``(T, D)`` float32 landmark/keypoint array.
+            max_len: Maximum number of tokens to generate.
+            beam_size: Beam width. ``None`` or 1 uses greedy decoding.
+            length_penalty: Length normalisation exponent (used only with beam search).
 
         Returns a :class:`SentencePrediction` with the decoded text, the
         raw token ids (including the leading ``<bos>`` and any trailing
@@ -112,9 +124,16 @@ class SentenceTranslator:
         eos_id = self.tokenizer.eos_id
         pad_id = self.tokenizer.pad_id
 
-        decoded = self.model.greedy_decode(
-            src, src_lengths, bos_id, eos_id, max_len
-        )
+        if beam_size is not None and beam_size > 1:
+            decoded = self.model.beam_decode(
+                src, src_lengths, bos_id, eos_id,
+                beam_size=beam_size, max_len=max_len,
+                length_penalty=length_penalty,
+            )
+        else:
+            decoded = self.model.greedy_decode(
+                src, src_lengths, bos_id, eos_id, max_len
+            )
         ids = decoded[0].tolist()
         sentence = self.tokenizer.decode(ids, strip_special=True)
         score = self._score_sequence(src, src_lengths, ids, pad_id)

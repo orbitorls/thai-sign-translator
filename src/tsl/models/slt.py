@@ -146,3 +146,79 @@ class SignToTextTransformer(nn.Module):
             if finished.all():
                 break
         return decoded
+
+    @torch.no_grad()
+    def beam_decode(
+        self,
+        src: torch.Tensor,
+        src_lengths: torch.Tensor,
+        bos_id: int,
+        eos_id: int,
+        beam_size: int = 5,
+        max_len: int = 128,
+        length_penalty: float = 1.0,
+    ) -> torch.Tensor:
+        """Beam-search decoding. Returns (B, <=max_len) token ids (best hypothesis)."""
+        B = src.size(0)
+        device = src.device
+        memory = self.encode(src, src_lengths)
+        memory_key_padding_mask = self._build_src_pad_mask(src, src_lengths)
+
+        all_hyps: list[list[list[int]]] = []
+        for b in range(B):
+            mem = memory[b:b+1]
+            mem_mask = memory_key_padding_mask[b:b+1] if memory_key_padding_mask is not None else None
+
+            beams = [(torch.full((1, 1), bos_id, dtype=torch.long, device=device), 0.0)]
+            completed: list[tuple[list[int], float]] = []
+
+            for _ in range(max_len - 1):
+                new_beams: list[tuple[torch.Tensor, float]] = []
+                for seq, score in beams:
+                    if seq[0, -1].item() == eos_id:
+                        completed.append((seq[0].tolist(), score))
+                        continue
+                    T_tgt = seq.size(1)
+                    tgt_mask = nn.Transformer.generate_square_subsequent_mask(
+                        T_tgt, device=device, dtype=memory.dtype
+                    )
+                    h = self.tgt_embed(seq)
+                    h = self.tgt_pos_enc(h)
+                    h = self.decoder(
+                        tgt=h,
+                        memory=mem.expand(1, -1, -1) if mem.size(0) == 1 else mem,
+                        tgt_mask=tgt_mask,
+                        memory_key_padding_mask=mem_mask,
+                    )
+                    logits = self.out_proj(h[:, -1, :])
+                    log_probs = torch.log_softmax(logits, dim=-1)
+                    topk_log_probs, topk_ids = log_probs.topk(beam_size, dim=-1)
+                    for k in range(beam_size):
+                        new_seq = torch.cat([seq, topk_ids[:, k:k+1]], dim=1)
+                        new_score = score + topk_log_probs[0, k].item()
+                        new_beams.append((new_seq, new_score))
+
+                if not new_beams:
+                    break
+                new_beams.sort(key=lambda x: x[1], reverse=True)
+                beams = new_beams[:beam_size]
+
+                if len(completed) >= beam_size:
+                    break
+
+            for seq, score in beams:
+                if seq[0, -1].item() != eos_id:
+                    completed.append((seq[0].tolist(), score))
+
+            completed.sort(
+                key=lambda x: x[1] / ((len(x[0]) - 1) ** length_penalty),
+                reverse=True,
+            )
+            best = completed[0][0] if completed else [bos_id]
+            all_hyps.append(best)
+
+        max_hyp_len = max(len(h) for h in all_hyps)
+        out = torch.full((B, max_hyp_len), eos_id, dtype=torch.long, device=device)
+        for i, hyp in enumerate(all_hyps):
+            out[i, :len(hyp)] = torch.tensor(hyp, dtype=torch.long, device=device)
+        return out

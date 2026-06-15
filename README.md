@@ -66,30 +66,116 @@ normalizer) but are otherwise independent.
 
 | Dataset | Used for | Why |
 |---|---|---|
-| `Namonpas/thai-sign-language-tsl51` (Hugging Face) | Main training data | 252 continuous sentence videos + landmark CSVs, CC BY-NC-SA 4.0 |
+| `Namonpas/thai-sign-language-tsl51` (Hugging Face) | Fine-tuning | 252 continuous sentence videos + landmark CSVs, CC BY-NC-SA 4.0 |
+| How2Sign B-F-H keypoints (Google Drive) | Pretraining (ASL-English) | ~80k sentences, ~80 hr, ready-to-use OpenPose keypoints (137 per frame) |
 | NSTDA Thai Sign Language Multi-tier Annotation | Auxiliary annotation | ELAN .eaf files with CC + Gloss tiers; access via AI for Thai |
-| TSL-ONE-S (skeletal npy) | Optional word-level pretrain | 4152 samples, request videos separately |
-| (Foreign datasets like How2Sign/OpenASL) | Not used in v1 | Different language; not Thai Sign Language |
+| TSL-ONE-S (skeletal npy) | Optional word-level pretrain | 4152 samples, 29 signers, 184 glosses |
 
-ThaiSignVis is NOT used in the initial release because the spec required
-ready-to-use landmarks only (no raw video download). The new pipeline is
-`landmarks -> text`, not `video -> text`.
+ThaiSignVis is NOT used because the spec required ready-to-use landmarks only
+(no raw video download). The pipeline is `landmarks -> text`, not `video -> text`.
 
-### Training
+### Model-size presets
 
+Three architecture presets are available via `--model-size`:
+
+| Preset | d_model | nhead | Layers (enc/dec) | dim_feedforward | max_pos_len |
+|---|---|---|---|---|---|
+| `small` | 64 | 4 | 2/2 | 128 | 1024 |
+| `base` | 256 | 8 | 4/4 | 1024 | 1024 |
+| `large` | 512 | 8 | 6/6 | 2048 | 2048 |
+
+### Two-stage training
+
+**Stage 1 — Pretrain on How2Sign** (ASL keypoints → English text):
+```bash
+python -m tsl.train.train_slt \
+  --stage how2sign \
+  --data-root /path/to/how2sign \
+  --model-size base \
+  --epochs 10 \
+  --batch-size 8 \
+  --lr 5e-4 \
+  --out-dir checkpoints/slt_pretrain
+```
+
+**Stage 2 — Fine-tune on TSL-51** (Thai landmarks → Thai text):
+```bash
+python -m tsl.train.train_slt \
+  --stage finetune \
+  --data-root /path/to/tsl51-local \
+  --pretrained-checkpoint checkpoints/slt_pretrain \
+  --model-size base \
+  --epochs 20 \
+  --batch-size 4 \
+  --lr 2e-4 \
+  --out-dir checkpoints/slt_finetune
+```
+
+**Direct TSL-51 training** (no pretraining):
 ```bash
 python -m tsl.train.train_slt \
   --data-root /path/to/tsl51-local \
+  --model-size base \
   --epochs 5 \
   --batch-size 4 \
   --out-dir checkpoints/slt
 ```
 
-Outputs in `checkpoints/slt/`:
+### WSL GPU training
+
+Use WSL2 with the NVIDIA WSL driver and a CUDA-enabled PyTorch install. From
+WSL, verify GPU access with:
+
+```bash
+nvidia-smi
+python -c "import torch; print(torch.cuda.is_available())"
+```
+
+Recommended training command:
+
+```bash
+python -m tsl.train.train_slt \
+  --data-root /path/to/tsl51-local \
+  --model-size base \
+  --device auto \
+  --require-gpu \
+  --epochs 5 \
+  --batch-size 4 \
+  --out-dir checkpoints/slt
+```
+
+`--device auto` uses CUDA when available and falls back to CPU otherwise.
+`--require-gpu` fails fast if no GPU is detected.
+
+Outputs in `<out-dir>/`:
 - `slt_model.pt` — state dict
 - `tokenizer.json` — char-level vocab
 - `model_config.json` — constructor kwargs (for inference reload)
 - `train_metrics.json` — per-epoch loss
+
+### Download How2Sign for pretraining
+
+```bash
+bash scripts/download_how2sign_keypoints.sh /path/to/how2sign
+```
+
+This downloads ~23 GB of frontal-view B-F-H 2D keypoints + re-aligned English
+text CSVs and arranges them in the expected directory structure.
+
+### Decoding
+
+The model supports two decoding strategies:
+
+- **Greedy** (default): fast, deterministic.
+- **Beam search**: higher quality, configurable beam width. Pass `beam_size` to
+  `SentenceTranslator.translate()` or use the CLI in evaluation scripts.
+
+```python
+from tsl.inference.sentence_translator import SentenceTranslator
+translator = SentenceTranslator("checkpoints/slt")
+pred = translator.translate(features, beam_size=5, length_penalty=1.0)
+print(pred.sentence)  # better quality than greedy
+```
 
 ### Inference via API
 
@@ -132,11 +218,10 @@ print(evaluate_sentences(refs, hyps))
 
 - This pipeline is `landmarks -> text`, not `video -> text`. The webcam flow
   still goes through the existing word recognizer.
-- TSL-51 has only 252 sentence examples, so the model is a baseline, not
-  production-grade.
-- The decoder uses greedy search (no beam search yet).
-- Foreign sign-language datasets (How2Sign/OpenASL/PHOENIX) are NOT used; they
-  were considered for pretraining but excluded to keep the v1 purely Thai.
+- TSL-51 has only 252 sentence examples, so the model benefits substantially
+  from How2Sign pretraining.
+- How2Sign keypoints are OpenPose format (137 × 3), different from MediaPipe;
+  the input projection layer handles the dimensionality difference.
 
 ## Setup
 

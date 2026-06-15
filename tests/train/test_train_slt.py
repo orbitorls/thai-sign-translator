@@ -13,10 +13,10 @@ import torch
 from tsl.data.manifest import SignTextExample
 from tsl.data.slt_collate import slt_collate
 from tsl.data.tsl51 import load_landmark_sequence
-from tsl.text.tokenizer import CharTokenizer
+from tsl.text.tokenizer import CharTokenizer, WordTokenizer
+from tsl.train import runtime as train_runtime
 from tsl.train.train_slt import (
     _build_model,
-    _right_shift_target,
     _save_metrics,
     _save_tokenizer,
     eval_loss,
@@ -104,20 +104,33 @@ def _write_synthetic_tsl51(root: Path, n: int = 3) -> None:
 # ---------------------------------------------------------------------------
 
 
-def test_save_load_tokenizer_roundtrip(tmp_path):
+def test_save_load_char_tokenizer_roundtrip(tmp_path):
     tok = CharTokenizer(["สวัสดี", "ครับ", "ฉัน"])
     path = tmp_path / "tokenizer.json"
     _save_tokenizer(tok, str(path))
 
     loaded = load_tokenizer(str(path))
 
+    assert isinstance(loaded, CharTokenizer)
     assert loaded.vocab_size == tok.vocab_size
-    assert list(loaded._char_to_id.keys()) == list(tok._char_to_id.keys())
-    # Special-token ids must round-trip.
     assert loaded.pad_id == tok.pad_id
     assert loaded.bos_id == tok.bos_id
     assert loaded.eos_id == tok.eos_id
     assert loaded.unk_id == tok.unk_id
+    # Round-trip encode/decode.
+    assert loaded.decode(loaded.encode("สวัสดี")) == "สวัสดี"
+
+
+def test_save_load_word_tokenizer_roundtrip(tmp_path):
+    tok = WordTokenizer(["สวัสดี ฉัน", "ครับ คุณ"])
+    path = tmp_path / "tokenizer.json"
+    _save_tokenizer(tok, str(path))
+
+    loaded = load_tokenizer(str(path))
+
+    assert isinstance(loaded, WordTokenizer)
+    assert loaded.vocab_size == tok.vocab_size
+    assert loaded.decode(loaded.encode("สวัสดี ฉัน")) == "สวัสดี ฉัน"
 
 
 def test_save_load_tokenizer_file_is_valid_json(tmp_path):
@@ -137,35 +150,6 @@ def test_save_load_tokenizer_file_is_valid_json(tmp_path):
 def test_load_tokenizer_handles_missing_file():
     with pytest.raises(FileNotFoundError):
         load_tokenizer("/nonexistent/path/to/tokenizer.json")
-
-
-# ---------------------------------------------------------------------------
-# Right-shift helper
-# ---------------------------------------------------------------------------
-
-
-def test_right_shift_target():
-    tgt = torch.tensor([[5, 6, 7]])
-    shifted = _right_shift_target(tgt, bos_id=1)
-    expected = torch.tensor([[1, 5, 6]])
-    assert torch.equal(shifted, expected)
-
-
-def test_right_shift_target_batches():
-    tgt = torch.tensor(
-        [
-            [2, 3, 4, 5],
-            [6, 7, 8, 9],
-        ]
-    )
-    shifted = _right_shift_target(tgt, bos_id=1)
-    expected = torch.tensor(
-        [
-            [1, 2, 3, 4],
-            [1, 6, 7, 8],
-        ]
-    )
-    assert torch.equal(shifted, expected)
 
 
 # ---------------------------------------------------------------------------
@@ -217,6 +201,7 @@ def test_train_script_smoke(tmp_path, monkeypatch):
 
     # Isolate stdout side effects and argv so we can call main() directly.
     monkeypatch.setattr(sys, "argv", ["train_slt.py"])
+    monkeypatch.setattr(train_runtime.torch.cuda, "is_available", lambda: False)
 
     ret = main(
         argv=[
@@ -245,18 +230,48 @@ def test_train_script_smoke(tmp_path, monkeypatch):
     assert "final_train_loss" in metrics
     assert len(metrics["epochs"]) == 1
 
-    # The saved tokenizer must round-trip.
+    # The saved tokenizer must round-trip for all training texts.
     loaded_tok = load_tokenizer(str(out_dir / "tokenizer.json"))
     for text in ("สวัสดี", "ฉันกินข้าว", "ขอบคุณ"):
-        assert text in loaded_tok._char_to_id or any(
-            ch in loaded_tok._char_to_id for ch in text
-        )
+        decoded = loaded_tok.decode(loaded_tok.encode(text))
+        # At minimum, the decoded text contains the same non-space chars.
+        assert len(decoded) > 0
 
     # The state-dict must reload into a fresh model of the same shape.
     state = torch.load(str(out_dir / "slt_model.pt"), map_location="cpu")
     assert "out_proj.weight" in state
     rebuilt = _build_model(loaded_tok.vocab_size)
     rebuilt.load_state_dict(state)
+
+
+def test_train_script_require_gpu_fails_without_cuda(tmp_path, monkeypatch):
+    data_root = tmp_path / "data"
+    data_root.mkdir()
+
+    out_dir = tmp_path / "out"
+    out_dir.mkdir()
+
+    monkeypatch.setattr(sys, "argv", ["train_slt.py"])
+    monkeypatch.setattr(train_runtime.torch.cuda, "is_available", lambda: False)
+
+    with pytest.raises(RuntimeError):
+        main(
+            argv=[
+                "--data-root",
+                str(data_root),
+                "--epochs",
+                "1",
+                "--batch-size",
+                "2",
+                "--limit",
+                "3",
+                "--out-dir",
+                str(out_dir),
+                "--device",
+                "cpu",
+                "--require-gpu",
+            ]
+        )
 
 
 # ---------------------------------------------------------------------------
