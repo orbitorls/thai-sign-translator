@@ -11,3 +11,6 @@ fastdtw>=0.3.4
 scikit-learn>=1.4.0
 matplotlib>=3.8.0
 pydantic>=2.6.0
+transformers>=4.40,<5
+sentencepiece>=0.2.0
+sacrebleu>=2.4.0

@@ -23,6 +23,9 @@ EXPECTED_PACKAGES = {
     "scikit-learn",
     "matplotlib",
     "pydantic",
+    "transformers",
+    "sentencepiece",
+    "sacrebleu",
 }
 
 

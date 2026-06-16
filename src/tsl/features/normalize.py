@@ -18,6 +18,9 @@ import numpy as np
 
 from config import NOSE_IDX, LSHOULDER_IDX, RSHOULDER_IDX
 
+CANONICAL_FEATURE_DIM: int = 312  # D = len(SELECTED_LANDMARKS) * 3
+FEATURE_LAYOUT_VERSION: str = "v3-312"
+
 _FACE_SUBSET: list[int] = [
     70, 63, 105, 66, 107,
     300, 293, 334, 296, 336,
