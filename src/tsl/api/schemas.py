@@ -1,5 +1,7 @@
 from pydantic import BaseModel
 
+from tsl.features.schema import TSL51_162
+
 
 class PredictRequest(BaseModel):
     frames: list[list[list[float]]]
@@ -23,12 +25,21 @@ class TrainSignResponse(BaseModel):
 
 
 class TranslateSentenceRequest(BaseModel):
-    frames: list[list[float]]
-    feature_dim: int = 162
+    frames: list
+    feature_schema: str = TSL51_162
     max_len: int = 128
 
 
 class TranslateSentenceResponse(BaseModel):
     sentence: str
-    tokens: list[int]
+    score: float
+
+
+class TranslateVideoRequest(BaseModel):
+    frames: list  # (T, 543, 3) raw landmark frames OR (T, 312) normalized
+    feature_schema: str = "raw_mediapipe_543x3"  # matches schema.py constants
+
+
+class TranslateVideoResponse(BaseModel):
+    sentence: str
     score: float

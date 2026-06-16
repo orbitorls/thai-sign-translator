@@ -1,7 +1,7 @@
 """FastAPI app for the Thai Sign Language translator.
 
 Endpoints:
-- POST /predict        : recognize a sequence against the registered prototypes
+- POST /predict        : legacy/dev-only word recognition against registered prototypes
 - POST /train-custom-sign: add a new sign (gradient-free) to the registry
 - GET  /signs          : list currently registered sign names
 - POST /evaluate       : run the two-track evaluation driver
@@ -33,12 +33,20 @@ from tsl.api.schemas import (
     TrainSignResponse,
     TranslateSentenceRequest,
     TranslateSentenceResponse,
+    TranslateVideoRequest,
+    TranslateVideoResponse,
 )
 from tsl.features.normalize import SELECTED_LANDMARKS, normalize_sequence
+from tsl.inference.sentence_runtime import (
+    FeatureSchemaMismatchError,
+    SentenceRuntime,
+)
 from tsl.inference.recognizer import Recognizer
-from tsl.inference.sentence_translator import SentenceTranslator
 from tsl.models.encoder import LandmarkEncoder
 from tsl.registry.prototype_store import PrototypeStore
+
+_RAW_MEDIAPIPE_SCHEMA = "raw_mediapipe_543x3"
+_SELECTED_312_SCHEMA = "selected_312"
 
 app = FastAPI(title="Thai Sign Language Translator")
 
@@ -53,7 +61,8 @@ def index() -> FileResponse:
 
 _store: PrototypeStore | None = None
 _recognizer: Recognizer | None = None
-_translator: SentenceTranslator | None = None
+_sentence_runtime: SentenceRuntime | None = None
+_active_translator = None
 
 
 def _build_encoder() -> LandmarkEncoder:
@@ -90,17 +99,48 @@ def get_recognizer() -> Recognizer:
     return _recognizer
 
 
-def get_sentence_translator() -> SentenceTranslator:
-    global _translator
-    if _translator is None:
+def get_sentence_runtime() -> SentenceRuntime:
+    global _sentence_runtime
+    if _sentence_runtime is None:
         try:
-            _translator = SentenceTranslator(config.SLT_CHECKPOINT_DIR)
+            _sentence_runtime = SentenceRuntime.from_checkpoint_dir(config.SLT_CHECKPOINT_DIR)
         except FileNotFoundError as e:
             raise HTTPException(
                 status_code=503,
                 detail="SLT checkpoint not found; train a model first",
             ) from e
-    return _translator
+    return _sentence_runtime
+
+
+def get_active_translator():
+    """Return the best available translator for video inference.
+
+    Preference order:
+    1. PoseT5Translator from SLT_V3_CHECKPOINT_DIR (if pose_t5_config.json exists there)
+    2. SentenceTranslator from get_sentence_runtime() (legacy slt_v2 fallback)
+
+    Raises HTTPException(503) if neither checkpoint is available.
+    """
+    global _active_translator
+    if _active_translator is not None:
+        return _active_translator
+
+    v3_dir = getattr(config, "SLT_V3_CHECKPOINT_DIR", None)
+    if v3_dir:
+        v3_config_path = os.path.join(v3_dir, "pose_t5_config.json")
+        if os.path.isfile(v3_config_path):
+            try:
+                from tsl.inference.pose_t5_translator import PoseT5Translator
+                _active_translator = PoseT5Translator.from_checkpoint_dir(v3_dir)
+                return _active_translator
+            except Exception as e:
+                # v3 exists but failed to load — fall through to v2
+                pass
+
+    # Fall back to legacy SentenceTranslator via SentenceRuntime
+    runtime = get_sentence_runtime()  # raises 503 if not available
+    _active_translator = runtime.translator
+    return _active_translator
 
 
 def _raw_frames_to_array(frames) -> np.ndarray:
@@ -120,7 +160,7 @@ def _persist_store(store) -> None:
     store.save(store_path)
 
 
-@app.post("/predict", response_model=PredictResponse)
+@app.post("/predict", response_model=PredictResponse, summary="Legacy/dev-only word prediction")
 def predict(req: PredictRequest, recognizer: Recognizer = Depends(get_recognizer)) -> PredictResponse:
     raw = _raw_frames_to_array(req.frames)
     seq_norm = normalize_sequence(raw)
@@ -151,52 +191,87 @@ def list_signs(store: PrototypeStore = Depends(get_store)) -> dict:
 @app.post("/translate-sentence", response_model=TranslateSentenceResponse)
 def translate_sentence(
     req: TranslateSentenceRequest,
-    translator: SentenceTranslator = Depends(get_sentence_translator),
+    runtime: SentenceRuntime = Depends(get_sentence_runtime),
 ) -> TranslateSentenceResponse:
     if not req.frames:
-        return TranslateSentenceResponse(sentence="", tokens=[], score=0.0)
+        return TranslateSentenceResponse(sentence="", score=0.0)
     try:
-        arr = np.asarray(req.frames, dtype=np.float32)
-    except (TypeError, ValueError) as e:
-        raise HTTPException(status_code=400, detail=f"could not parse frames: {e}") from e
-    if arr.ndim != 2:
-        raise HTTPException(
-            status_code=400,
-            detail=(
-                f"frames must be a 2-D list (T, feature_dim); got array shape "
-                f"{arr.shape!r}"
-            ),
+        pred = runtime.translate(
+            req.frames,
+            feature_schema=req.feature_schema,
+            max_len=req.max_len,
         )
-    if arr.shape[0] == 0:
-        return TranslateSentenceResponse(sentence="", tokens=[], score=0.0)
-    if arr.shape[1] != req.feature_dim:
-        raise HTTPException(
-            status_code=400,
-            detail=(
-                f"feature_dim mismatch: each frame has {arr.shape[1]} floats but "
-                f"feature_dim={req.feature_dim}"
-            ),
-        )
-    if arr.size % req.feature_dim != 0:
-        raise HTTPException(
-            status_code=400,
-            detail=(
-                f"flat float count {arr.size} is not divisible by feature_dim={req.feature_dim}"
-            ),
-        )
-    features = arr.reshape(arr.shape[0], req.feature_dim)
-    try:
-        pred = translator.translate(features, max_len=req.max_len)
-    except ValueError as e:
+    except (FeatureSchemaMismatchError, ValueError) as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
     except FileNotFoundError as e:
         raise HTTPException(
             status_code=503,
             detail="SLT checkpoint not found; train a model first",
         ) from e
-    return TranslateSentenceResponse(
-        sentence=pred.sentence, tokens=pred.token_ids, score=pred.score
-    )
+    return TranslateSentenceResponse(sentence=pred.sentence, score=pred.score)
+
+
+@app.post("/translate-video", response_model=TranslateVideoResponse)
+def translate_video_endpoint(
+    req: TranslateVideoRequest,
+    translator=Depends(get_active_translator),
+) -> TranslateVideoResponse:
+    """Translate raw landmark frames (or pre-normalized features) to Thai text.
+
+    Accepts ``feature_schema`` values:
+    - ``"raw_mediapipe_543x3"``: frames must be ``(T, 543, 3)`` or flat ``(T, 1629)``.
+    - ``"selected_312"``: frames must be ``(T, 312)`` already-normalized features.
+
+    Returns 400 for bad shape, 503 if no checkpoint is available.
+    """
+    if not req.frames:
+        return TranslateVideoResponse(sentence="", score=0.0)
+
+    try:
+        arr = np.asarray(req.frames, dtype=np.float32)
+    except (TypeError, ValueError) as e:
+        raise HTTPException(status_code=400, detail=f"Could not parse frames: {e}") from e
+
+    schema = req.feature_schema
+
+    try:
+        if schema == _RAW_MEDIAPIPE_SCHEMA:
+            # Accept (T, 543, 3) or flat (T, 1629)
+            if arr.ndim == 3 and arr.shape[1] == 543 and arr.shape[2] == 3:
+                features = normalize_sequence(arr)  # → (T, 312)
+            elif arr.ndim == 2 and arr.shape[1] == 543 * 3:
+                features = normalize_sequence(arr.reshape(arr.shape[0], 543, 3))
+            else:
+                raise HTTPException(
+                    status_code=400,
+                    detail=(
+                        f"feature_schema={schema!r} requires shape (T, 543, 3) "
+                        f"or (T, 1629); got {tuple(arr.shape)}"
+                    ),
+                )
+        elif schema == _SELECTED_312_SCHEMA:
+            if arr.ndim != 2 or arr.shape[1] != 312:
+                raise HTTPException(
+                    status_code=400,
+                    detail=(
+                        f"feature_schema={schema!r} requires shape (T, 312); "
+                        f"got {tuple(arr.shape)}"
+                    ),
+                )
+            features = arr
+        else:
+            raise HTTPException(
+                status_code=400,
+                detail=(
+                    f"Unsupported feature_schema={schema!r} for /translate-video; "
+                    f"expected one of {[_RAW_MEDIAPIPE_SCHEMA, _SELECTED_312_SCHEMA]!r}"
+                ),
+            )
+    except HTTPException:
+        raise
+
+    pred = translator.translate(features)
+    return TranslateVideoResponse(sentence=pred.sentence, score=float(pred.score))
 
 
 def get_eval_fn():
