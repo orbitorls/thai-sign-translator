@@ -17,12 +17,21 @@ from __future__ import annotations
 import math
 
 import numpy as np
+import sacrebleu
 
-__all__ = ["chrf_score", "chrf_corpus", "evaluate_slt"]
+__all__ = [
+    "chrf_score",
+    "chrf_corpus",
+    "bleu_score",
+    "evaluate_slt",
+    "evaluate_slt_with_sources",
+    "_chrf_score_legacy",
+    "_chrf_corpus_legacy",
+]
 
 
 # ---------------------------------------------------------------------------
-# chrF implementation (no sacrebleu dependency)
+# Legacy hand-rolled chrF implementation (deprecated – kept for backward compat)
 # ---------------------------------------------------------------------------
 
 def _char_ngrams(text: str, n: int) -> dict[str, int]:
@@ -41,13 +50,16 @@ def _f_score(precision: float, recall: float, beta: float = 2.0) -> float:
     return (1 + b2) * precision * recall / denom
 
 
-def chrf_score(
+def _chrf_score_legacy(
     hypotheses: list[str],
     references: list[str],
     max_n: int = 6,
     beta: float = 2.0,
 ) -> float:
-    """Corpus-level chrF score in [0, 1].
+    """Corpus-level chrF score in [0, 1] — hand-rolled implementation.
+
+    .. deprecated::
+        Use :func:`chrf_score` (sacrebleu-based) instead.
 
     beta=2 weights recall twice as heavily as precision (standard for MT).
     Returns 0.0 for empty inputs.
@@ -80,12 +92,16 @@ def chrf_score(
     return _f_score(avg_p, avg_r, beta)
 
 
-def chrf_corpus(
+def _chrf_corpus_legacy(
     hypotheses: list[str],
     references: list[str],
 ) -> dict:
-    """Return chrF + per-sentence breakdown."""
-    score = chrf_score(hypotheses, references)
+    """Return chrF + per-sentence breakdown — hand-rolled implementation.
+
+    .. deprecated::
+        Use :func:`chrf_corpus` (sacrebleu-based) instead.
+    """
+    score = _chrf_score_legacy(hypotheses, references)
     exact = sum(h == r for h, r in zip(hypotheses, references))
     lengths = [len(h) for h in hypotheses]
     return {
@@ -98,7 +114,54 @@ def chrf_corpus(
 
 
 # ---------------------------------------------------------------------------
-# High-level evaluation runner
+# sacrebleu-based metrics (primary)
+# ---------------------------------------------------------------------------
+
+def chrf_score(hypotheses: list[str], references: list[str]) -> float:
+    """Corpus-level chrF score using sacrebleu (primary metric).
+
+    Returns a value in [0, 1]. sacrebleu internally returns 0-100; this
+    function normalises to 0-1 for consistency with the rest of the codebase.
+    Returns 0.0 for empty inputs.
+    """
+    if not hypotheses:
+        return 0.0
+    result = sacrebleu.corpus_chrf(hypotheses, [[r] for r in references])
+    return float(result.score) / 100.0
+
+
+def bleu_score(hypotheses: list[str], references: list[str]) -> float:
+    """Corpus-level BLEU with character tokenization for Thai (no word spaces).
+
+    Returns a value in [0, 1]. sacrebleu internally returns 0-100; this
+    function normalises to 0-1. Returns 0.0 for empty inputs.
+    """
+    if not hypotheses:
+        return 0.0
+    result = sacrebleu.corpus_bleu(hypotheses, [[r] for r in references], tokenize="char")
+    return float(result.score) / 100.0
+
+
+def chrf_corpus(
+    hypotheses: list[str],
+    references: list[str],
+) -> dict:
+    """Return chrF (sacrebleu) + BLEU + per-sentence breakdown."""
+    score = chrf_score(hypotheses, references)
+    exact = sum(h == r for h, r in zip(hypotheses, references))
+    lengths = [len(h) for h in hypotheses]
+    return {
+        "chrf": round(score * 100, 2),
+        "bleu": round(bleu_score(hypotheses, references) * 100, 2) if hypotheses else 0.0,
+        "exact_match": exact,
+        "exact_match_pct": round(exact / max(len(hypotheses), 1) * 100, 1),
+        "n": len(hypotheses),
+        "mean_hyp_len": round(sum(lengths) / max(len(lengths), 1), 1),
+    }
+
+
+# ---------------------------------------------------------------------------
+# High-level evaluation runners
 # ---------------------------------------------------------------------------
 
 def evaluate_slt(
@@ -121,7 +184,7 @@ def evaluate_slt(
 
     Returns
     -------
-    dict with keys: chrf, exact_match, exact_match_pct, n, mean_hyp_len,
+    dict with keys: chrf, bleu, exact_match, exact_match_pct, n, mean_hyp_len,
                     hypotheses, references
     """
     hypotheses: list[str] = []
@@ -140,3 +203,59 @@ def evaluate_slt(
     metrics["hypotheses"] = hypotheses
     metrics["references"] = references
     return metrics
+
+
+def evaluate_slt_with_sources(
+    translator,
+    examples,
+    load_fn,
+    beam_size: int = 4,
+    max_len: int = 64,
+) -> dict:
+    """Decode every example and compute chrF + BLEU, with per-source breakdown.
+
+    Parameters
+    ----------
+    translator : SentenceTranslator
+    examples   : list[SignTextExample]  – each must have a ``source`` attribute
+    load_fn    : callable(path) -> (T, D) ndarray
+    beam_size  : beam width (1 = greedy)
+    max_len    : maximum output token length
+
+    Returns
+    -------
+    dict with keys:
+        ``"overall"``    – :func:`chrf_corpus` dict over all examples
+        ``"per_source"`` – mapping of source name → :func:`chrf_corpus` dict
+    """
+    hypotheses: list[str] = []
+    references: list[str] = []
+    sources: list[str] = []
+
+    for ex in examples:
+        features = load_fn(ex.features_path)
+        pred = translator.translate(features, max_len=max_len, beam_size=beam_size)
+        hypotheses.append(pred.sentence)
+        references.append(ex.target_text)
+        sources.append(getattr(ex, "source", "unknown"))
+
+    overall = chrf_corpus(hypotheses, references)
+    overall["hypotheses"] = hypotheses
+    overall["references"] = references
+
+    # Group by source and compute per-source metrics
+    source_hyps: dict[str, list[str]] = {}
+    source_refs: dict[str, list[str]] = {}
+    for hyp, ref, src in zip(hypotheses, references, sources):
+        source_hyps.setdefault(src, []).append(hyp)
+        source_refs.setdefault(src, []).append(ref)
+
+    per_source: dict[str, dict] = {
+        src: chrf_corpus(source_hyps[src], source_refs[src])
+        for src in source_hyps
+    }
+
+    return {
+        "overall": overall,
+        "per_source": per_source,
+    }
