@@ -1,4 +1,12 @@
-from tsl.api.schemas import PredictRequest, PredictResponse, TrainSignRequest, TrainSignResponse
+from tsl.api.schemas import (
+    PredictRequest,
+    PredictResponse,
+    TrainSignRequest,
+    TrainSignResponse,
+    TranslateSentenceRequest,
+    TranslateSentenceResponse,
+)
+from tsl.features.schema import TSL51_162
 
 
 def test_predict_request_holds_raw_frames():
@@ -37,3 +45,60 @@ def test_train_sign_response_shape():
     assert resp.name == "cat"
     assert resp.num_clips == 2
     assert resp.total_signs == 5
+
+
+def test_translate_sentence_request_holds_schema_and_frames():
+    frame = [0.0] * 162
+    req = TranslateSentenceRequest(frames=[frame, frame], feature_schema=TSL51_162)
+    assert req.feature_schema == TSL51_162
+    assert len(req.frames) == 2
+    assert len(req.frames[0]) == 162
+
+
+def test_translate_sentence_response_shape():
+    resp = TranslateSentenceResponse(sentence="hello", score=0.91)
+    assert resp.sentence == "hello"
+    assert resp.score == 0.91
+
+
+# --- New schemas from Task 2 ---
+from tsl.api.schemas import ModelInfo, ModelsResponse, TranslateRequest, TranslateResponse
+
+
+def test_model_info_schema():
+    m = ModelInfo(
+        id="v3_poset5",
+        label_th="PoseT5 (รุ่นล่าสุด)",
+        label_en="PoseT5 (Latest)",
+        architecture="pose_t5",
+        available=True,
+        default=True,
+    )
+    assert m.id == "v3_poset5"
+    assert m.available is True
+    assert m.default is True
+
+
+def test_models_response_schema():
+    m = ModelInfo(id="v2_slt", label_th="SLT", label_en="SLT", architecture="sentence_runtime", available=False, default=False)
+    resp = ModelsResponse(models=[m], default="v2_slt")
+    assert resp.default == "v2_slt"
+    assert len(resp.models) == 1
+
+
+def test_translate_request_defaults():
+    req = TranslateRequest(frames=[[0.0] * 312])
+    assert req.feature_schema == "raw_mediapipe_543x3"
+    assert req.model is None
+    assert req.max_len == 128
+
+
+def test_translate_request_with_model():
+    req = TranslateRequest(frames=[], model="v2_slt")
+    assert req.model == "v2_slt"
+
+
+def test_translate_response_includes_model_field():
+    resp = TranslateResponse(sentence="สวัสดี", score=0.9, model="v3_poset5")
+    assert resp.sentence == "สวัสดี"
+    assert resp.model == "v3_poset5"
