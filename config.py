@@ -40,4 +40,8 @@ PROTOTYPE_STORE_PATH = os.path.join(CHECKPOINT_DIR, "prototypes.pt")
 # wrapper reads ``slt_model.pt``, ``tokenizer.json`` and
 # ``model_config.json`` lazily from there.
 SLT_CHECKPOINT_DIR = os.path.join(CHECKPOINT_DIR, "slt_v2")
-SLT_V3_CHECKPOINT_DIR = os.path.join(CHECKPOINT_DIR, "pose_t5_v3")
+SLT_COMBINED_CHECKPOINT_DIR = os.path.join(CHECKPOINT_DIR, "slt_combined_v2")
+# Current best verified PoseT5 artifact as of 2026-06-20.
+# The mixed-vocab export remains a research lane; the strongest verified
+# runtime artifact currently usable in practice is the TSL51-only export.
+SLT_V3_CHECKPOINT_DIR = os.path.join(CHECKPOINT_DIR, "pose_t5_rtx4060_tsl51_only_export_verified")
