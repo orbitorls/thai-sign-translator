@@ -60,8 +60,16 @@ _SELECTED_312_SCHEMA = "selected_312"
 
 app = FastAPI(title="Thai Sign Language Translator")
 
-_WEB_DIR = Path(__file__).resolve().parents[3] / "web"
-app.mount("/static", StaticFiles(directory=str(_WEB_DIR)), name="static")
+_REPO_ROOT = Path(__file__).resolve().parents[3]
+_FRONTEND_DIST = _REPO_ROOT / "frontend" / "dist"
+_WEB_DIR = _FRONTEND_DIST if _FRONTEND_DIST.is_dir() else _REPO_ROOT / "web"
+
+if (_WEB_DIR / "assets").is_dir():
+    # Vite build: assets are hashed under dist/assets/
+    app.mount("/assets", StaticFiles(directory=str(_WEB_DIR / "assets")), name="assets")
+else:
+    # Legacy web/ dir: served under /static
+    app.mount("/static", StaticFiles(directory=str(_WEB_DIR)), name="static")
 
 
 @app.get("/")
