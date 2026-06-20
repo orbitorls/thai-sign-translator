@@ -61,6 +61,8 @@ _SELECTED_312_SCHEMA = "selected_312"
 app = FastAPI(title="Thai Sign Language Translator")
 
 _REPO_ROOT = Path(__file__).resolve().parents[3]
+# Production: run `cd frontend && npm run build` first so dist/ is populated.
+# Vite copies index.html (with CDN <script> tags) and bundles src/ into dist/assets/.
 _FRONTEND_DIST = _REPO_ROOT / "frontend" / "dist"
 _WEB_DIR = _FRONTEND_DIST if _FRONTEND_DIST.is_dir() else _REPO_ROOT / "web"
 
@@ -354,8 +356,10 @@ def translate(req: TranslateRequest) -> TranslateResponse:
     Returns 503 if the selected model's checkpoint is not available.
     """
     if not req.frames:
-        default_id = default_spec().id if req.model is None else (req.model or default_spec().id)
-        return TranslateResponse(sentence="", score=0.0, model=default_id)
+        spec = get_spec(req.model) if req.model is not None else default_spec()
+        if spec is None:
+            raise HTTPException(status_code=400, detail=f"unknown model {req.model!r}")
+        return TranslateResponse(sentence="", score=0.0, model=spec.id)
 
     try:
         arr = np.asarray(req.frames, dtype=np.float32)

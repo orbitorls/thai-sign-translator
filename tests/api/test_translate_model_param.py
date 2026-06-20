@@ -47,6 +47,7 @@ def test_translate_omitted_model_uses_default():
     body = resp.json()
     assert body["sentence"] == "ทดสอบ"
     assert "model" in body   # returned model id present
+    mock_fn.assert_called_once_with(None)
 
 
 def test_translate_explicit_model_v2_dispatches_correctly():
@@ -63,6 +64,7 @@ def test_translate_explicit_model_v2_dispatches_correctly():
         )
     assert resp.status_code == 200
     assert resp.json()["model"] == "v2_slt"
+    mock_fn.assert_called_once_with("v2_slt")
 
 
 def test_translate_unknown_model_returns_400():
