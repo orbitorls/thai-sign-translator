@@ -114,7 +114,6 @@ function Spinner() {
         animation: "spin 0.8s linear infinite",
       }}
     >
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   );
 }
