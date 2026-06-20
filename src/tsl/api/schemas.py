@@ -43,3 +43,34 @@ class TranslateVideoRequest(BaseModel):
 class TranslateVideoResponse(BaseModel):
     sentence: str
     score: float
+
+
+# --- Model catalog schemas ---
+
+class ModelInfo(BaseModel):
+    id: str
+    label_th: str
+    label_en: str
+    architecture: str   # "pose_t5" or "sentence_runtime"
+    available: bool
+    default: bool
+
+
+class ModelsResponse(BaseModel):
+    models: list[ModelInfo]
+    default: str   # id of the default model
+
+
+# --- Unified translate schema ---
+
+class TranslateRequest(BaseModel):
+    frames: list                             # (T, 543, 3) or (T, 312)
+    feature_schema: str = "raw_mediapipe_543x3"
+    model: str | None = None                 # None → use default model
+    max_len: int = 128
+
+
+class TranslateResponse(BaseModel):
+    sentence: str
+    score: float
+    model: str    # id of the model that was used

@@ -35,6 +35,16 @@ from tsl.api.schemas import (
     TranslateSentenceResponse,
     TranslateVideoRequest,
     TranslateVideoResponse,
+    ModelInfo,
+    ModelsResponse,
+    TranslateRequest,
+    TranslateResponse,
+)
+from tsl.api.model_catalog import (
+    get_catalog,
+    get_spec,
+    default_spec,
+    availability,
 )
 from tsl.features.normalize import SELECTED_LANDMARKS, normalize_sequence
 from tsl.inference.sentence_runtime import (
@@ -63,6 +73,7 @@ _store: PrototypeStore | None = None
 _recognizer: Recognizer | None = None
 _sentence_runtime: SentenceRuntime | None = None
 _active_translator = None
+_translator_cache: dict[str, object] = {}
 
 
 def _build_encoder() -> LandmarkEncoder:
@@ -112,6 +123,33 @@ def get_sentence_runtime() -> SentenceRuntime:
     return _sentence_runtime
 
 
+def get_translator_for(model_id: str | None = None):
+    """Return the best available translator for the given model_id.
+
+    model_id=None → use the default model from the catalog.
+    Raises HTTPException(400) for unknown model_id.
+    Raises HTTPException(503) if the model's checkpoint is not available.
+    Caches loaded translators in _translator_cache.
+    """
+    spec = get_spec(model_id) if model_id is not None else default_spec()
+    if spec is None:
+        raise HTTPException(status_code=400, detail=f"unknown model {model_id!r}")
+    if spec.id in _translator_cache:
+        return _translator_cache[spec.id]
+    if not availability(spec):
+        raise HTTPException(
+            status_code=503,
+            detail=f"model {spec.id!r} checkpoint not available",
+        )
+    if spec.architecture == "pose_t5":
+        from tsl.inference.pose_t5_translator import PoseT5Translator
+        t = PoseT5Translator.from_checkpoint_dir(spec.checkpoint_dir)
+    else:
+        t = SentenceRuntime.from_checkpoint_dir(spec.checkpoint_dir).translator
+    _translator_cache[spec.id] = t
+    return t
+
+
 def get_active_translator():
     """Return the best available translator for video inference.
 
@@ -120,6 +158,7 @@ def get_active_translator():
     2. SentenceTranslator from get_sentence_runtime() (legacy slt_v2 fallback)
 
     Raises HTTPException(503) if neither checkpoint is available.
+    Backward-compat: checks and updates _active_translator global for test control.
     """
     global _active_translator
     if _active_translator is not None:
@@ -133,7 +172,7 @@ def get_active_translator():
                 from tsl.inference.pose_t5_translator import PoseT5Translator
                 _active_translator = PoseT5Translator.from_checkpoint_dir(v3_dir)
                 return _active_translator
-            except Exception as e:
+            except Exception:
                 # v3 exists but failed to load — fall through to v2
                 pass
 
@@ -188,6 +227,25 @@ def list_signs(store: PrototypeStore = Depends(get_store)) -> dict:
     return {"signs": store.names()}
 
 
+@app.get("/models", response_model=ModelsResponse, summary="List selectable models")
+def list_models() -> ModelsResponse:
+    """Return all catalog models with availability and default flags."""
+    catalog = get_catalog()
+    default_id = default_spec().id
+    model_infos = [
+        ModelInfo(
+            id=spec.id,
+            label_th=spec.label_th,
+            label_en=spec.label_en,
+            architecture=spec.architecture,
+            available=availability(spec),
+            default=(spec.id == default_id),
+        )
+        for spec in catalog
+    ]
+    return ModelsResponse(models=model_infos, default=default_id)
+
+
 @app.post("/translate-sentence", response_model=TranslateSentenceResponse)
 def translate_sentence(
     req: TranslateSentenceRequest,
@@ -211,6 +269,47 @@ def translate_sentence(
     return TranslateSentenceResponse(sentence=pred.sentence, score=pred.score)
 
 
+def _coerce_to_features(arr: np.ndarray, schema: str) -> np.ndarray:
+    """Convert raw landmark array or pre-normalized features to (T, 312) float32.
+
+    schema="raw_mediapipe_543x3": accepts (T, 543, 3) or flat (T, 1629).
+    schema="selected_312": accepts (T, 312) directly.
+
+    Raises HTTPException(400) on bad shape or unknown schema.
+    """
+    if schema == _RAW_MEDIAPIPE_SCHEMA:
+        if arr.ndim == 3 and arr.shape[1] == 543 and arr.shape[2] == 3:
+            return normalize_sequence(arr)
+        elif arr.ndim == 2 and arr.shape[1] == 543 * 3:
+            return normalize_sequence(arr.reshape(arr.shape[0], 543, 3))
+        else:
+            raise HTTPException(
+                status_code=400,
+                detail=(
+                    f"feature_schema={schema!r} requires shape (T, 543, 3) "
+                    f"or (T, 1629); got {tuple(arr.shape)}"
+                ),
+            )
+    elif schema == _SELECTED_312_SCHEMA:
+        if arr.ndim != 2 or arr.shape[1] != 312:
+            raise HTTPException(
+                status_code=400,
+                detail=(
+                    f"feature_schema={schema!r} requires shape (T, 312); "
+                    f"got {tuple(arr.shape)}"
+                ),
+            )
+        return arr
+    else:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                f"Unsupported feature_schema={schema!r}; "
+                f"expected one of {[_RAW_MEDIAPIPE_SCHEMA, _SELECTED_312_SCHEMA]!r}"
+            ),
+        )
+
+
 @app.post("/translate-video", response_model=TranslateVideoResponse)
 def translate_video_endpoint(
     req: TranslateVideoRequest,
@@ -226,52 +325,48 @@ def translate_video_endpoint(
     """
     if not req.frames:
         return TranslateVideoResponse(sentence="", score=0.0)
+    try:
+        arr = np.asarray(req.frames, dtype=np.float32)
+    except (TypeError, ValueError) as e:
+        raise HTTPException(status_code=400, detail=f"Could not parse frames: {e}") from e
+    features = _coerce_to_features(arr, req.feature_schema)
+    pred = translator.translate(features)
+    return TranslateVideoResponse(sentence=pred.sentence, score=float(pred.score))
+
+
+@app.post("/translate", response_model=TranslateResponse, summary="Translate sign video to Thai text")
+def translate(req: TranslateRequest) -> TranslateResponse:
+    """Unified translation endpoint with per-request model selection.
+
+    Accepts raw MediaPipe frames (T, 543, 3) or pre-normalized (T, 312) features.
+    Returns the Thai sentence, confidence score, and the model id used.
+
+    model=None uses the default catalog model.
+    Returns 400 for bad shape, unknown schema, or unknown model.
+    Returns 503 if the selected model's checkpoint is not available.
+    """
+    if not req.frames:
+        default_id = default_spec().id if req.model is None else (req.model or default_spec().id)
+        return TranslateResponse(sentence="", score=0.0, model=default_id)
 
     try:
         arr = np.asarray(req.frames, dtype=np.float32)
     except (TypeError, ValueError) as e:
         raise HTTPException(status_code=400, detail=f"Could not parse frames: {e}") from e
 
-    schema = req.feature_schema
+    features = _coerce_to_features(arr, req.feature_schema)
+    translator = get_translator_for(req.model)
 
-    try:
-        if schema == _RAW_MEDIAPIPE_SCHEMA:
-            # Accept (T, 543, 3) or flat (T, 1629)
-            if arr.ndim == 3 and arr.shape[1] == 543 and arr.shape[2] == 3:
-                features = normalize_sequence(arr)  # → (T, 312)
-            elif arr.ndim == 2 and arr.shape[1] == 543 * 3:
-                features = normalize_sequence(arr.reshape(arr.shape[0], 543, 3))
-            else:
-                raise HTTPException(
-                    status_code=400,
-                    detail=(
-                        f"feature_schema={schema!r} requires shape (T, 543, 3) "
-                        f"or (T, 1629); got {tuple(arr.shape)}"
-                    ),
-                )
-        elif schema == _SELECTED_312_SCHEMA:
-            if arr.ndim != 2 or arr.shape[1] != 312:
-                raise HTTPException(
-                    status_code=400,
-                    detail=(
-                        f"feature_schema={schema!r} requires shape (T, 312); "
-                        f"got {tuple(arr.shape)}"
-                    ),
-                )
-            features = arr
-        else:
-            raise HTTPException(
-                status_code=400,
-                detail=(
-                    f"Unsupported feature_schema={schema!r} for /translate-video; "
-                    f"expected one of {[_RAW_MEDIAPIPE_SCHEMA, _SELECTED_312_SCHEMA]!r}"
-                ),
-            )
-    except HTTPException:
-        raise
+    # Resolve the spec to get the actual model id used
+    spec = get_spec(req.model) if req.model is not None else default_spec()
+    used_model_id = spec.id
 
     pred = translator.translate(features)
-    return TranslateVideoResponse(sentence=pred.sentence, score=float(pred.score))
+    return TranslateResponse(
+        sentence=pred.sentence,
+        score=float(pred.score),
+        model=used_model_id,
+    )
 
 
 def get_eval_fn():
