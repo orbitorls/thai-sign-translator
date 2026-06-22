@@ -60,6 +60,17 @@ export interface TranslateParams {
   maxLen?: number;
 }
 
+export interface SupportedPhrasesResult {
+  phrases: string[];
+  total: number;
+  note: string;
+}
+
+export async function getSupportedPhrases(): Promise<SupportedPhrasesResult> {
+  const resp = await fetch("/supported-phrases");
+  return _handleResponse<SupportedPhrasesResult>(resp);
+}
+
 export async function translate(params: TranslateParams): Promise<TranslateResult> {
   const { frames, model, featureSchema = "raw_mediapipe_543x3", maxLen = 128 } = params;
   const resp = await fetch("/translate", {

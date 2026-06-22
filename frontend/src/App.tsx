@@ -7,6 +7,7 @@ import { RecordButton } from "./components/RecordButton";
 import { ModelPicker } from "./components/ModelPicker";
 import { ResultCard } from "./components/ResultCard";
 import { StatusBar } from "./components/StatusBar";
+import { SupportedPhrases } from "./components/SupportedPhrases";
 import { th } from "./i18n/th";
 
 function Translator() {
@@ -34,7 +35,8 @@ function Translator() {
   // Derive status bar message
   let statusMsg = "";
   let statusType: "info" | "warn" | "error" | "success" = "info";
-  if (capture.cameraError) {
+  const hasCameraError = Boolean(capture.cameraError);
+  if (hasCameraError) {
     statusMsg = `${th.cameraError} — ${th.cameraErrorHint}`;
     statusType = "error";
   } else if (!capture.ready) {
@@ -104,11 +106,33 @@ function Translator() {
         />
       </div>
 
-      {/* Status bar */}
-      <StatusBar
-        message={statusMsg || (showNoFrames ? th.noFrames : "")}
-        type={statusType}
-      />
+      {/* Status bar + camera retry */}
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "var(--space-2)" }}>
+        <StatusBar
+          message={statusMsg || (showNoFrames ? th.noFrames : "")}
+          type={statusType}
+        />
+        {hasCameraError && (
+          <button
+            type="button"
+            onClick={() => capture.start()}
+            style={{
+              padding: "var(--space-2) var(--space-4)",
+              borderRadius: "var(--radius-full)",
+              border: "1px solid var(--color-primary)",
+              background: "var(--color-primary-light)",
+              color: "var(--color-primary)",
+              fontSize: "var(--font-size-sm)",
+              fontWeight: 600,
+              cursor: "pointer",
+              fontFamily: "var(--font-family)",
+              transition: "background var(--transition)",
+            }}
+          >
+            {th.cameraRetry}
+          </button>
+        )}
+      </div>
 
       {/* Result */}
       <ResultCard
@@ -117,6 +141,9 @@ function Translator() {
         error={translator.error}
         errorStatus={translator.errorStatus}
       />
+
+      {/* Supported phrases — lets users know what they can sign */}
+      <SupportedPhrases />
     </main>
   );
 }

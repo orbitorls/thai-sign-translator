@@ -8,6 +8,7 @@ export default defineConfig({
       "/translate": "http://127.0.0.1:8000",
       "/models": "http://127.0.0.1:8000",
       "/signs": "http://127.0.0.1:8000",
+      "/supported-phrases": "http://127.0.0.1:8000",
       "/static": "http://127.0.0.1:8000",
     },
   },

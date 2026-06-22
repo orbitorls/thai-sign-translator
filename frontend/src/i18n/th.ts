@@ -30,4 +30,13 @@ export const th = {
   // Errors
   errorModelUnavailable: "โมเดลนี้ยังไม่พร้อมใช้งาน",
   errorGeneric: "เกิดข้อผิดพลาด กรุณาลองใหม่",
+
+  // Supported phrases panel
+  supportedPhrasesTitle: "วลีที่รองรับ",
+  supportedPhrasesScope: "โมเดลปัจจุบันรู้จักวลีจากชุดข้อมูล TSL-51 เท่านั้น",
+  supportedPhrasesUnavailable: "ไม่สามารถโหลดรายการวลีได้",
+  supportedPhrasesEmpty: "ยังไม่มีข้อมูลวลีที่รองรับ",
+  supportedPhrasesCount: (n: number) => `${n} วลี`,
+  supportedPhrasesShow: "ดูวลีที่รองรับ",
+  supportedPhrasesHide: "ซ่อน",
 } as const;

@@ -74,3 +74,11 @@ class TranslateResponse(BaseModel):
     sentence: str
     score: float
     model: str    # id of the model that was used
+
+
+# --- Supported phrases schema ---
+
+class SupportedPhrasesResponse(BaseModel):
+    phrases: list[str]          # sorted list of phrases the active model recognises
+    total: int                  # len(phrases)
+    note: str = ""              # human-readable scope note

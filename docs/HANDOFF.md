@@ -30,7 +30,7 @@
      - ผลคือ launcher จะยังพยายามใช้ tier แรงสุดที่ **ยังใช้งานได้จริง** แต่ไม่เสียเวลาตีกับ tier ที่ backend ปฏิเสธไปแล้ว
   6. `src/tsl/train/checkpointing.py` จะเขียน `best_checkpoint.txt` / `latest_checkpoint.txt` ใหม่ทุกครั้งที่ save/prune checkpoint แล้ว
      - root cause ที่เจอจริงใน `r8` คือ sidecar สองไฟล์นี้ค้างค่าจาก dataset restore เก่า ทำให้ monitoring/publisher มอง state ผิดจาก `.pt` ที่มีอยู่จริง
-     - มี test เพิ่มใน `tests/train/test_checkpointing.py`
+     - (test อ้างอิง: `tests/train/test_checkpointing.py` — ยังไม่ได้สร้างไฟล์, TODO)
 - **อัปเดต launcher ล่าสุด (2026-06-20 รอบเช้า)**:
   1. `scripts/colab_cli_pose_t5.ps1` แยก `backend rejected` ออกจาก `temporary cooldown` ใน status/message แล้ว
   2. เพิ่ม `-AllowFallbackBelowMinGpuOnReject`:
@@ -196,7 +196,7 @@
        - note สำคัญ: code ล่าสุดเปลี่ยน default ของ local launcher เป็น `--resume best_state` แล้ว
          - root cause ที่แก้: ถ้า restart หลัง full checkpoint lag เราไม่ควรถอยกลับไป `ckpt_step00002000.pt`
          - trainer ตอนนี้ resume จาก `best_model_state.pt` ได้แบบ model-only แล้ว แม้ไม่มี optimizer/scheduler state
-         - มี test รองรับใน `tests/train/test_train_pose_t5.py`
+         - (test อ้างอิง: `tests/train/test_train_pose_t5.py` — ยังไม่ได้สร้างไฟล์, TODO)
        - log ยืนยัน:
          - `checkpoint_steps = 5000`
          - `resume = auto`

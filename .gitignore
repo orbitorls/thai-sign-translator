@@ -10,9 +10,14 @@ __pycache__/
 
 # Frontend install output
 frontend/node_modules/
+frontend/dist/
 
 # Temporary runtime output
 tmp/
+
+# Large binary artefacts — never commit (checkpoints are GB-scale; data is managed separately)
+data/
+checkpoints/
 
 # OS/editor noise
 .DS_Store

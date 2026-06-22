@@ -39,6 +39,7 @@ from tsl.api.schemas import (
     ModelsResponse,
     TranslateRequest,
     TranslateResponse,
+    SupportedPhrasesResponse,
 )
 from tsl.api.model_catalog import (
     get_catalog,
@@ -398,3 +399,41 @@ def get_eval_fn():
 @app.post("/evaluate")
 def evaluate(eval_fn=Depends(get_eval_fn)) -> dict:
     return eval_fn()
+
+
+@app.get("/supported-phrases", response_model=SupportedPhrasesResponse, summary="List phrases the active model recognises")
+def supported_phrases() -> SupportedPhrasesResponse:
+    """Return the unique sorted phrases in the TSL-51 training manifest.
+
+    When the data directory is unavailable (e.g. CI or fresh installs) the
+    endpoint returns an empty list with a scope note rather than 503, so the
+    frontend can degrade gracefully.
+    """
+    tsl51_root = os.path.join(config.DATA_DIR, "tsl51")
+    meta_path = os.path.join(tsl51_root, "metadata", "sentence_metadata.csv")
+
+    if not os.path.isfile(meta_path):
+        return SupportedPhrasesResponse(
+            phrases=[],
+            total=0,
+            note="ข้อมูล TSL-51 ไม่พร้อมใช้งานบนเซิร์ฟเวอร์นี้",
+        )
+
+    try:
+        import pandas as pd
+        df = pd.read_csv(meta_path)
+        col = "sentence_clean"
+        if col not in df.columns:
+            return SupportedPhrasesResponse(phrases=[], total=0, note="ไม่พบคอลัมน์ sentence_clean")
+        phrases = sorted({
+            str(v).strip()
+            for v in df[col].dropna()
+            if str(v).strip()
+        })
+        return SupportedPhrasesResponse(
+            phrases=phrases,
+            total=len(phrases),
+            note="วลีจากชุดข้อมูล TSL-51 (ภาษามือไทย)",
+        )
+    except Exception as exc:  # pragma: no cover
+        return SupportedPhrasesResponse(phrases=[], total=0, note=f"โหลดล้มเหลว: {exc}")
