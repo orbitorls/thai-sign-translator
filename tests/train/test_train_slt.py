@@ -17,6 +17,7 @@ from tsl.text.tokenizer import CharTokenizer, WordTokenizer
 from tsl.train import runtime as train_runtime
 from tsl.train.train_slt import (
     _build_model,
+    _build_tokenizer,
     _save_metrics,
     _save_tokenizer,
     eval_loss,
@@ -150,6 +151,24 @@ def test_save_load_tokenizer_file_is_valid_json(tmp_path):
 def test_load_tokenizer_handles_missing_file():
     with pytest.raises(FileNotFoundError):
         load_tokenizer("/nonexistent/path/to/tokenizer.json")
+
+
+def test_build_tokenizer_fits_train_examples_only(tmp_path):
+    (tmp_path / "train").mkdir()
+    (tmp_path / "val").mkdir()
+    train_examples = _make_synthetic_examples(
+        tmp_path / "train",
+        texts=["ฉัน กิน ข้าว", "คุณ กิน ข้าว"],
+    )
+    val_examples = _make_synthetic_examples(
+        tmp_path / "val",
+        texts=["แมว วิ่ง เร็ว"],
+    )
+
+    tokenizer = _build_tokenizer("word", train_examples)
+
+    assert tokenizer.encode("ฉัน กิน ข้าว") != [tokenizer.unk_id] * 3
+    assert tokenizer.encode(val_examples[0].target_text) == [tokenizer.unk_id] * 3
 
 
 # ---------------------------------------------------------------------------

@@ -172,7 +172,7 @@ The model supports two decoding strategies:
 
 ```python
 from tsl.inference.sentence_translator import SentenceTranslator
-translator = SentenceTranslator("checkpoints/slt")
+translator = SentenceTranslator("checkpoints/slt_v2")
 pred = translator.translate(features, beam_size=5, length_penalty=1.0)
 print(pred.sentence)  # better quality than greedy
 ```

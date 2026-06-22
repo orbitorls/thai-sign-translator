@@ -1,0 +1,19 @@
+{
+  "id": "orbitorls/thai-sign-how2sign-mixed-all",
+  "title": "Thai Sign How2Sign To Mixed All",
+  "code_file": "notebook.ipynb",
+  "language": "python",
+  "kernel_type": "notebook",
+  "is_private": true,
+  "machine_shape": "NvidiaTeslaT4",
+  "enable_gpu": true,
+  "enable_internet": true,
+  "dataset_sources": [
+    "orbitorls/thai-sign-code",
+    "orbitorls/thai-sign-mixed-all-v6-archived",
+    "orbitorls/thai-sign-mt5small",
+    "orbitorls/thai-sign-how2sign-pretrain-output"
+  ],
+  "competition_sources": [],
+  "kernel_sources": []
+}

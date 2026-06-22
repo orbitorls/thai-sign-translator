@@ -1,0 +1,18 @@
+{
+  "id": "orbitorls/thai-sign-mixed-all-eval",
+  "title": "Thai Sign Mixed All Eval",
+  "code_file": "notebook.ipynb",
+  "language": "python",
+  "kernel_type": "notebook",
+  "is_private": true,
+  "machine_shape": "NvidiaTeslaT4",
+  "enable_gpu": true,
+  "enable_internet": true,
+  "dataset_sources": [
+    "orbitorls/thai-sign-code",
+    "orbitorls/thai-sign-mixed-all-v6-archived",
+    "orbitorls/thai-sign-mixed-all-output"
+  ],
+  "competition_sources": [],
+  "kernel_sources": []
+}

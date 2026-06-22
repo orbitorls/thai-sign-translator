@@ -179,9 +179,11 @@ def _worker(args_tuple: tuple) -> dict:
         result["status"] = "skipped"
         return result
 
-    # Insert src into path so tsl.features.normalize is importable
-    if src_path not in sys.path:
-        sys.path.insert(0, src_path)
+    # Insert src and project root (for config.py) so tsl.features.normalize is importable
+    root_path = os.path.dirname(src_path)
+    for p in (src_path, root_path):
+        if p not in sys.path:
+            sys.path.insert(0, p)
 
     # Try full MediaPipe extraction from mp4
     if abs_video_path and os.path.isfile(abs_video_path):

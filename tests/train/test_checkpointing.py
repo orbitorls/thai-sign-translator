@@ -293,6 +293,42 @@ def test_find_best_custom_metric(tmp_path):
     assert Path(best).name == "ckpt_step00000002.pt"
 
 
+def test_save_checkpoint_updates_latest_and_best_sidecars(tmp_path):
+    model, optimizer, _, _ = _make_components()
+
+    save_checkpoint(
+        tmp_path, model, optimizer, None, None,
+        step=100, epoch=0, metrics={"val_chrf": 11.0}, keep_last_k=2,
+    )
+    save_checkpoint(
+        tmp_path, model, optimizer, None, None,
+        step=200, epoch=0, metrics={"val_chrf": 9.0}, keep_last_k=2,
+    )
+    save_checkpoint(
+        tmp_path, model, optimizer, None, None,
+        step=300, epoch=0, metrics={"val_chrf": 12.5}, keep_last_k=2,
+    )
+
+    assert (tmp_path / "latest_checkpoint.txt").read_text(encoding="utf-8") == "ckpt_step00000300.pt"
+    assert (tmp_path / "best_checkpoint.txt").read_text(encoding="utf-8") == "ckpt_step00000300.pt"
+
+
+def test_save_checkpoint_keeps_best_sidecar_when_best_is_older(tmp_path):
+    model, optimizer, _, _ = _make_components()
+
+    save_checkpoint(
+        tmp_path, model, optimizer, None, None,
+        step=100, epoch=0, metrics={"val_chrf": 20.0}, keep_last_k=1,
+    )
+    save_checkpoint(
+        tmp_path, model, optimizer, None, None,
+        step=200, epoch=0, metrics={"val_chrf": 10.0}, keep_last_k=1,
+    )
+
+    assert (tmp_path / "latest_checkpoint.txt").read_text(encoding="utf-8") == "ckpt_step00000200.pt"
+    assert (tmp_path / "best_checkpoint.txt").read_text(encoding="utf-8") == "ckpt_step00000100.pt"
+
+
 # ---------------------------------------------------------------------------
 # Scheduler state saved and restored
 # ---------------------------------------------------------------------------

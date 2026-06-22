@@ -61,6 +61,21 @@ def test_load_manifest_split_filter():
         assert all(e.split == "val" for e in val)
 
 
+def test_load_manifest_preserves_source_and_feature_layout_version():
+    with tempfile.TemporaryDirectory() as tmp:
+        _make_manifest(tmp, n=1)
+        manifest_path = os.path.join(tmp, MANIFEST_FILENAME)
+        df = pd.read_csv(manifest_path)
+        df["source"] = "thaisignvis"
+        df["feature_layout_version"] = "v3-312"
+        df.to_csv(manifest_path, index=False, encoding="utf-8")
+
+        examples = load_thaisignvis_manifest(tmp)
+
+        assert examples[0].source == "thaisignvis"
+        assert examples[0].metadata["feature_layout_version"] == "v3-312"
+
+
 def test_load_manifest_missing_npy_skipped():
     with tempfile.TemporaryDirectory() as tmp:
         _make_manifest(tmp, n=4)

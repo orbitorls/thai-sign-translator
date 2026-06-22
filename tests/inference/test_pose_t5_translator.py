@@ -120,6 +120,110 @@ def test_translate_wrong_ndim_raises(tiny_model):
         translator.translate(np.zeros((10, 312, 1), dtype=np.float32))
 
 
+def test_translate_forwards_generation_constraints(tiny_model, monkeypatch):
+    from tsl.inference.pose_t5_translator import PoseT5Translator
+
+    translator = PoseT5Translator(model=tiny_model, tokenizer=_FakeTokenizer(), device="cpu")
+    captured: dict[str, object] = {}
+
+    def fake_generate(src, src_lengths, **kwargs):
+        captured["kwargs"] = kwargs
+        return torch.tensor([[0, 2, 1]], dtype=torch.long)
+
+    monkeypatch.setattr(translator.model, "generate", fake_generate)
+
+    pred = translator.translate(
+        np.random.randn(8, 312).astype(np.float32),
+        max_new_tokens=40,
+        beam_size=3,
+        no_repeat_ngram_size=4,
+        repetition_penalty=1.3,
+        length_penalty=0.9,
+    )
+
+    assert pred.sentence == "ก ข"
+    assert captured["kwargs"] == {
+        "max_new_tokens": 40,
+        "num_beams": 3,
+        "no_repeat_ngram_size": 4,
+        "repetition_penalty": 1.3,
+        "length_penalty": 0.9,
+        "early_stopping": True,
+    }
+
+
+def test_translate_default_generation_matches_legacy_behavior(tiny_model, monkeypatch):
+    from tsl.inference.pose_t5_translator import PoseT5Translator
+
+    translator = PoseT5Translator(model=tiny_model, tokenizer=_FakeTokenizer(), device="cpu")
+    captured: dict[str, object] = {}
+
+    def fake_generate(src, src_lengths, **kwargs):
+        captured["kwargs"] = kwargs
+        return torch.tensor([[0, 2, 1]], dtype=torch.long)
+
+    monkeypatch.setattr(translator.model, "generate", fake_generate)
+
+    pred = translator.translate(np.random.randn(8, 312).astype(np.float32))
+
+    assert pred.sentence == "ก ข"
+    assert captured["kwargs"] == {
+        "max_new_tokens": 72,
+        "num_beams": 5,
+        "no_repeat_ngram_size": 3,
+        "repetition_penalty": 1.5,
+        "length_penalty": 0.7,
+        "early_stopping": True,
+    }
+
+
+def test_translate_preserves_raw_decode_output(tiny_model, monkeypatch):
+    from tsl.inference.pose_t5_translator import PoseT5Translator
+
+    tokenizer = _FakeTokenizer()
+    translator = PoseT5Translator(model=tiny_model, tokenizer=tokenizer, device="cpu")
+
+    def fake_generate(src, src_lengths, **kwargs):
+        return torch.tensor([[0, 2, 1]], dtype=torch.long)
+
+    monkeypatch.setattr(translator.model, "generate", fake_generate)
+    monkeypatch.setattr(tokenizer, "decode", lambda ids, skip_special_tokens=True: " padded ")
+
+    pred = translator.translate(np.random.randn(8, 312).astype(np.float32))
+
+    assert pred.sentence == " padded "
+
+
+def test_translate_batch_preserves_order_and_constraints(tiny_model, monkeypatch):
+    from tsl.inference.pose_t5_translator import PoseT5Translator
+
+    translator = PoseT5Translator(model=tiny_model, tokenizer=_FakeTokenizer(), device="cpu")
+    captured: dict[str, object] = {}
+
+    def fake_generate(src, src_lengths, **kwargs):
+        captured["shape"] = tuple(src.shape)
+        captured["lengths"] = src_lengths.tolist()
+        captured["kwargs"] = kwargs
+        return torch.tensor([[0, 2, 1], [0, 3, 1]], dtype=torch.long)
+
+    monkeypatch.setattr(translator.model, "generate", fake_generate)
+
+    preds = translator.translate_batch(
+        [
+            np.random.randn(8, 312).astype(np.float32),
+            np.random.randn(4, 312).astype(np.float32),
+        ],
+        max_new_tokens=6,
+        beam_size=2,
+    )
+
+    assert [pred.sentence for pred in preds] == ["ก ข", "ก ข"]
+    assert captured["shape"] == (2, 8, 312)
+    assert captured["lengths"] == [8, 4]
+    assert captured["kwargs"]["max_new_tokens"] == 6
+    assert captured["kwargs"]["num_beams"] == 2
+
+
 def test_model_stays_in_eval_mode(tiny_model):
     from tsl.inference.pose_t5_translator import PoseT5Translator
 

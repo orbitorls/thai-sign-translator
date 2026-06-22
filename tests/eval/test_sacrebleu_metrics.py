@@ -30,6 +30,11 @@ def test_chrf_score_higher_for_closer_strings():
     assert close_score > far_score
 
 
+def test_chrf_score_does_not_treat_mixed_pairs_as_perfect():
+    score = chrf_score(["abc", "def"], ["abc", "xyz"])
+    assert score < 1.0
+
+
 def test_chrf_score_empty_input_returns_zero():
     assert chrf_score([], []) == 0.0
 
@@ -52,6 +57,11 @@ def test_bleu_score_returns_float_in_range():
 def test_bleu_score_perfect_match():
     score = bleu_score(["สวัสดี"], ["สวัสดี"])
     assert abs(score - 1.0) < 1e-6
+
+
+def test_bleu_score_does_not_treat_mixed_pairs_as_perfect():
+    score = bleu_score(["abc", "def"], ["abc", "xyz"])
+    assert score < 1.0
 
 
 def test_bleu_score_empty_input_returns_zero():

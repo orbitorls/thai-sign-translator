@@ -1,0 +1,19 @@
+# Python cache
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Local tool state
+.claude/
+.omx/
+.superpowers/
+
+# Frontend install output
+frontend/node_modules/
+
+# Temporary runtime output
+tmp/
+
+# OS/editor noise
+.DS_Store
+Thumbs.db

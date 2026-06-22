@@ -126,7 +126,7 @@ def chrf_score(hypotheses: list[str], references: list[str]) -> float:
     """
     if not hypotheses:
         return 0.0
-    result = sacrebleu.corpus_chrf(hypotheses, [[r] for r in references])
+    result = sacrebleu.corpus_chrf(hypotheses, [references])
     return float(result.score) / 100.0
 
 
@@ -138,7 +138,7 @@ def bleu_score(hypotheses: list[str], references: list[str]) -> float:
     """
     if not hypotheses:
         return 0.0
-    result = sacrebleu.corpus_bleu(hypotheses, [[r] for r in references], tokenize="char")
+    result = sacrebleu.corpus_bleu(hypotheses, [references], tokenize="char")
     return float(result.score) / 100.0
 
 

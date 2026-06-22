@@ -18,6 +18,29 @@ holistic.onResults((results) => { if (!recording) return; const frame = assemble
 const camera = new Camera(video, { onFrame: async () => { await holistic.send({ image: video }); }, width: 480, height: 360 });
 camera.start();
 
-async function sendForPrediction() { if (frameBuffer.length === 0) { statusEl.textContent = "No frames captured."; return; } statusEl.textContent = "Recognizing…"; const resp = await fetch("/predict", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ frames: frameBuffer }) }); const data = await resp.json(); resultEl.textContent = `${data.word}  (${data.score.toFixed(2)})`; topkEl.textContent = data.topk.map((t) => `${t.word}: ${t.score.toFixed(2)}`).join("   "); statusEl.textContent = ""; }
+async function sendForPrediction() {
+  if (frameBuffer.length === 0) {
+    statusEl.textContent = "No frames captured.";
+    return;
+  }
+  statusEl.textContent = "Translating sentence...";
+  topkEl.textContent = "";
+  const resp = await fetch("/translate-sentence", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      frames: frameBuffer,
+      feature_schema: "raw_mediapipe_543x3"
+    })
+  });
+  const data = await resp.json();
+  if (!resp.ok) {
+    resultEl.textContent = "Sentence model unavailable";
+    statusEl.textContent = data.detail || "Translation failed.";
+    return;
+  }
+  resultEl.textContent = data.sentence || "-";
+  statusEl.textContent = "";
+}
 
 recordBtn.addEventListener("click", () => { recording = !recording; if (recording) { frameBuffer = []; recordBtn.textContent = "Stop recording"; statusEl.textContent = "Recording…"; statusEl.className = "recording"; } else { recordBtn.textContent = "Start recording"; statusEl.className = ""; sendForPrediction(); } });

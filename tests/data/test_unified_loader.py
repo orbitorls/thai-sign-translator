@@ -60,6 +60,32 @@ def test_load_manifest_returns_all_valid_rows(tmp_path):
     assert all(ex.source == "test_src" for ex in examples)
 
 
+def test_load_manifest_infers_source_from_root_when_source_column_missing(tmp_path):
+    data_root = tmp_path / "youtube_sl25_thai_v3"
+    data_root.mkdir()
+    row = _valid_row(data_root, 0)
+    del row["source"]
+    _write_manifest(data_root, [row])
+
+    examples = load_manifest(str(data_root))
+
+    assert len(examples) == 1
+    assert examples[0].source == "youtube_sl25_thai"
+
+
+def test_load_manifest_infers_canonical_tsl51_source_from_flat_kaggle_root(tmp_path):
+    data_root = tmp_path / "thai-sign-tsl51-flat-v3"
+    data_root.mkdir()
+    row = _valid_row(data_root, 0)
+    del row["source"]
+    _write_manifest(data_root, [row])
+
+    examples = load_manifest(str(data_root))
+
+    assert len(examples) == 1
+    assert examples[0].source == "tsl51"
+
+
 def test_load_manifest_metadata_contains_feature_layout_version(tmp_path):
     rows = [_valid_row(tmp_path, 0)]
     _write_manifest(tmp_path, rows)
@@ -99,6 +125,30 @@ def test_load_manifest_accepts_v3_312_with_extra_suffix(tmp_path):
 
     examples = load_manifest(str(tmp_path))
     assert len(examples) == 1
+
+
+def test_load_manifest_accepts_raw_holistic_layout(tmp_path):
+    seg_id = "seg_raw"
+    rel_path = f"landmarks/{seg_id}.npy"
+    _make_npy(tmp_path, rel_path, shape=(3, 543, 3))
+    _write_manifest(
+        tmp_path,
+        [
+            {
+                "segment_id": seg_id,
+                "npy_path": rel_path,
+                "text": "raw holistic",
+                "video_id": "video_raw",
+                "split": "train",
+                "source": "how2sign",
+                "feature_layout_version": "raw_mediapipe_543x3",
+            }
+        ],
+    )
+
+    examples = load_manifest(str(tmp_path))
+    assert len(examples) == 1
+    assert examples[0].metadata["feature_layout_version"] == "raw_mediapipe_543x3"
 
 
 # ---------------------------------------------------------------------------
@@ -223,7 +273,7 @@ def test_load_features_raises_on_3d_array(tmp_path):
     npy_path = tmp_path / "bad_features.npy"
     np.save(npy_path, np.ones((10, 312, 1), dtype=np.float32))  # 3D not 2D
 
-    with pytest.raises(ValueError, match="312"):
+    with pytest.raises(ValueError, match="543, 3"):
         load_features(str(npy_path))
 
 
@@ -233,3 +283,17 @@ def test_load_features_raises_on_1d_array(tmp_path):
 
     with pytest.raises(ValueError, match="312"):
         load_features(str(npy_path))
+
+
+def test_load_features_normalizes_raw_holistic_array(tmp_path):
+    npy_path = tmp_path / "raw_holistic.npy"
+    arr = np.zeros((5, 543, 3), dtype=np.float32)
+    arr[:, 489, 0] = 1.0
+    arr[:, 490, 0] = 2.0
+    arr[:, 522, 0] = 3.0
+    np.save(npy_path, arr)
+
+    normalized = load_features(str(npy_path))
+
+    assert normalized.shape == (5, 312)
+    assert normalized.dtype == np.float32

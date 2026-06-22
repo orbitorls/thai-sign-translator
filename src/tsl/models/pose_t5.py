@@ -77,7 +77,9 @@ class PoseToTextT5(nn.Module):
             dropout=encoder_dropout,
             batch_first=True,
         )
-        self.transformer_encoder = nn.TransformerEncoder(enc_layer, num_layers=num_encoder_layers)
+        self.transformer_encoder = nn.TransformerEncoder(
+            enc_layer, num_layers=num_encoder_layers, enable_nested_tensor=False
+        )
 
     # ------------------------------------------------------------------
     # Internal helpers
@@ -133,6 +135,20 @@ class PoseToTextT5(nn.Module):
         attn_mask = (~pad_mask).long()
 
         return memory, attn_mask
+
+    def encode_pooled(
+        self,
+        src: torch.Tensor,
+        src_lengths: torch.Tensor,
+        normalize: bool = True,
+    ) -> torch.Tensor:
+        """Return one pooled pose embedding per sequence."""
+        memory, attn_mask = self._build_pose_embeds(src, src_lengths)
+        mask = attn_mask.unsqueeze(-1).to(memory.dtype)
+        pooled = (memory * mask).sum(dim=1) / mask.sum(dim=1).clamp(min=1.0)
+        if normalize:
+            pooled = F.normalize(pooled, p=2.0, dim=-1)
+        return pooled
 
     # ------------------------------------------------------------------
     # Public API
@@ -208,7 +224,25 @@ class PoseToTextT5(nn.Module):
         """
         os.makedirs(checkpoint_dir, exist_ok=True)
 
-        self.t5_model.save_pretrained(checkpoint_dir)
+        # This training track persists distinct shared/lm_head weights, so the
+        # saved HF config must reflect that to avoid misleading tie warnings.
+        self.t5_model.config.tie_word_embeddings = False
+        try:
+            self.t5_model.save_pretrained(checkpoint_dir)
+        except Exception as exc:
+            message = str(exc).lower()
+            if os.name != "nt" or ("access is denied" not in message and "os error 5" not in message):
+                raise
+            # Some Windows environments intermittently fail while safetensors
+            # serializes the shard; fall back to the standard HF binary format.
+            self.t5_model.config.save_pretrained(checkpoint_dir)
+            generation_config = getattr(self.t5_model, "generation_config", None)
+            if generation_config is not None:
+                generation_config.save_pretrained(checkpoint_dir)
+            torch.save(
+                self.t5_model.state_dict(),
+                os.path.join(checkpoint_dir, "pytorch_model.bin"),
+            )
 
         torch.save(
             self.pose_encoder_state(),

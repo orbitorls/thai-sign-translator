@@ -13,7 +13,7 @@ while [ ! -f "$MANIFEST" ]; do
 done
 
 echo "Manifest found! Starting combined training …"
-PYTHONPATH=src python3.12 -m tsl.train.train_slt \
+PYTHONPATH=src python3.12 -u -m tsl.train.train_slt \
     --stage combined \
     --data-root "data/tsl51,data/youtube_sl25_thai" \
     --tokenizer char \

@@ -8,9 +8,16 @@ import pytest
 import torch
 import pandas as pd
 
+from tsl.data.manifest import SignTextExample
 from tsl.models.slt import SignToTextTransformer
 from tsl.train.config import resolve_config
-from tsl.train.train_slt import _load_pretrained_weights, _build_model, _resolve_input_dim
+from tsl.train.train_slt import (
+    _build_model,
+    _enforce_manifest_quality_gates,
+    _load_pretrained_weights,
+    _load_data,
+    _resolve_input_dim,
+)
 
 
 def test_resolve_input_dim_auto():
@@ -117,12 +124,12 @@ def test_load_data_limit_caps_training_only(tmp_path):
         columns=["video_id", "sentence_id", "sentence_clean", "landmark_path", "video_path"],
     ).to_csv(meta_dir / "sentence_metadata.csv", index=False)
 
-    from tsl.train.train_slt import _load_data
-
     train_ex, val_ex, _ = _load_data("tsl51", str(data_root), limit=3)
 
     assert len(train_ex) == 3
     assert len(val_ex) == 1
+    assert all(ex.split == "train" for ex in train_ex)
+    assert all(ex.split == "val" for ex in val_ex)
 
 
 def _write_synthetic_how2sign(root: Path, split: str, n: int = 2) -> None:
@@ -200,7 +207,6 @@ def _write_npy_manifest(root: Path, n: int = 3, source: str = "youtube_sl25") ->
 def test_load_data_youtube_sl25(tmp_path):
     data_root = tmp_path / "ytsl25"
     _write_npy_manifest(data_root, n=5)
-    from tsl.train.train_slt import _load_data
     train_ex, val_ex, load_fn = _load_data("youtube_sl25", str(data_root), None)
     assert len(train_ex) > 0
     assert len(val_ex) > 0
@@ -230,7 +236,6 @@ def test_load_data_combined(tmp_path):
     ytsl25_root = tmp_path / "ytsl25"
     _write_npy_manifest(ytsl25_root, n=4)
 
-    from tsl.train.train_slt import _load_data
     data_root = f"{tsl51_root},{ytsl25_root}"
     train_ex, val_ex, load_fn = _load_data("combined", data_root, None)
     assert len(train_ex) > 0
@@ -244,6 +249,59 @@ def test_load_data_combined(tmp_path):
     feat_yt = load_fn(yt_ex.features_path)
     assert feat_tsl51.ndim == 2
     assert feat_yt.ndim == 2
+
+
+def test_enforce_manifest_quality_gates_rejects_long_unique_open_vocab_run(tmp_path):
+    train_examples = [
+        SignTextExample(
+            example_id=f"yt_train_{i}",
+            source="youtube_sl25",
+            split="train",
+            features_path=str(tmp_path / f"train_{i}.npy"),
+            target_text=f"unique train sentence {i}",
+            metadata={"video_id": f"train_video_{i}"},
+        )
+        for i in range(8)
+    ]
+    val_examples = [
+        SignTextExample(
+            example_id=f"yt_val_{i}",
+            source="youtube_sl25",
+            split="val",
+            features_path=str(tmp_path / f"val_{i}.npy"),
+            target_text=f"unique val sentence {i}",
+            metadata={"video_id": f"val_video_{i}"},
+        )
+        for i in range(2)
+    ]
+
+    with pytest.raises(ValueError, match="youtube_sl25"):
+        _enforce_manifest_quality_gates("youtube_sl25", train_examples, val_examples, epochs=60)
+
+
+def test_enforce_manifest_quality_gates_allows_short_open_vocab_smoke_run(tmp_path):
+    train_examples = [
+        SignTextExample(
+            example_id="yt_train_0",
+            source="youtube_sl25",
+            split="train",
+            features_path=str(tmp_path / "train_0.npy"),
+            target_text="unique train sentence",
+            metadata={"video_id": "train_video_0"},
+        )
+    ]
+    val_examples = [
+        SignTextExample(
+            example_id="yt_val_0",
+            source="youtube_sl25",
+            split="val",
+            features_path=str(tmp_path / "val_0.npy"),
+            target_text="unique val sentence",
+            metadata={"video_id": "val_video_0"},
+        )
+    ]
+
+    _enforce_manifest_quality_gates("youtube_sl25", train_examples, val_examples, epochs=1)
 
 
 def test_train_main_finetune_smoke(tmp_path, monkeypatch):

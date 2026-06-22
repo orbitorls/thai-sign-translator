@@ -20,6 +20,10 @@ import torch.nn as nn
 __all__ = ["save_checkpoint", "load_checkpoint", "find_latest_checkpoint", "find_best_checkpoint"]
 
 
+def _torch_save_fast(payload, path: str | Path) -> None:
+    torch.save(payload, path, _use_new_zipfile_serialization=False)
+
+
 def _ckpt_step(path: Path) -> int:
     """Extract step number from a checkpoint filename like ckpt_step00001234.pt."""
     name = path.stem  # e.g. "ckpt_step00001234"
@@ -93,7 +97,7 @@ def save_checkpoint(
     fd, tmp_path = tempfile.mkstemp(dir=checkpoint_dir, suffix=".tmp")
     try:
         os.close(fd)
-        torch.save(payload, tmp_path)
+        _torch_save_fast(payload, tmp_path)
         os.replace(tmp_path, final_path)
     except Exception:
         # Clean up temp file if anything goes wrong.
@@ -109,11 +113,28 @@ def save_checkpoint(
     return final_path
 
 
+def _write_checkpoint_refs(
+    checkpoint_dir: Path,
+    *,
+    latest_path: Optional[Path],
+    best_path: Optional[Path],
+) -> None:
+    latest_ref = checkpoint_dir / "latest_checkpoint.txt"
+    best_ref = checkpoint_dir / "best_checkpoint.txt"
+    if latest_path is not None:
+        latest_ref.write_text(latest_path.name, encoding="utf-8")
+    elif latest_ref.exists():
+        latest_ref.unlink()
+    if best_path is not None:
+        best_ref.write_text(best_path.name, encoding="utf-8")
+    elif best_ref.exists():
+        best_ref.unlink()
+
+
 def _prune_checkpoints(checkpoint_dir: Path, keep_last_k: int) -> None:
     """Delete old checkpoints, keeping keep_last_k most recent + best by val_chrf."""
     ckpts = sorted(checkpoint_dir.glob("ckpt_step*.pt"), key=_ckpt_step)
-    if len(ckpts) <= keep_last_k:
-        return
+    latest_path = ckpts[-1] if ckpts else None
 
     # Identify the best checkpoint by val_chrf.
     best_path: Optional[Path] = None
@@ -128,6 +149,10 @@ def _prune_checkpoints(checkpoint_dir: Path, keep_last_k: int) -> None:
         except Exception:
             continue
 
+    if len(ckpts) <= keep_last_k:
+        _write_checkpoint_refs(checkpoint_dir, latest_path=latest_path, best_path=best_path)
+        return
+
     # Keep the last keep_last_k checkpoints.
     to_keep = set(ckpts[-keep_last_k:])
     if best_path is not None:
@@ -139,6 +164,7 @@ def _prune_checkpoints(checkpoint_dir: Path, keep_last_k: int) -> None:
                 ckpt.unlink()
             except OSError:
                 pass
+    _write_checkpoint_refs(checkpoint_dir, latest_path=latest_path, best_path=best_path)
 
 
 def load_checkpoint(
@@ -148,6 +174,8 @@ def load_checkpoint(
     scheduler,
     scaler,
     device: str | torch.device = "cpu",
+    *,
+    allow_missing_train_state: bool = False,
 ) -> dict:
     """Load training state from a checkpoint and restore all component states.
 
@@ -173,32 +201,38 @@ def load_checkpoint(
     """
     checkpoint_path = Path(checkpoint_path)
     # weights_only=False required to load RNG state objects (numpy arrays, Python tuples, etc.)
-    data = torch.load(checkpoint_path, map_location=device, weights_only=False)
+    data = torch.load(checkpoint_path, map_location="cpu", weights_only=False)
 
     model.load_state_dict(data["model_state_dict"])
-    optimizer.load_state_dict(data["optimizer_state_dict"])
+    optimizer_state_dict = data.get("optimizer_state_dict")
+    train_state_restored = optimizer_state_dict is not None
+    if optimizer_state_dict is not None:
+        optimizer.load_state_dict(optimizer_state_dict)
+    elif not allow_missing_train_state:
+        raise KeyError("optimizer_state_dict")
 
-    if scheduler is not None and data.get("scheduler_state_dict") is not None:
+    if train_state_restored and scheduler is not None and data.get("scheduler_state_dict") is not None:
         scheduler.load_state_dict(data["scheduler_state_dict"])
 
-    if scaler is not None and data.get("scaler_state_dict") is not None:
+    if train_state_restored and scaler is not None and data.get("scaler_state_dict") is not None:
         scaler.load_state_dict(data["scaler_state_dict"])
 
     # Restore RNG states for reproducibility.
     rng = data.get("rng_states", {})
-    if "python" in rng:
+    if train_state_restored and "python" in rng:
         random.setstate(rng["python"])
-    if "numpy" in rng:
+    if train_state_restored and "numpy" in rng:
         np.random.set_state(rng["numpy"])
-    if "torch" in rng:
+    if train_state_restored and "torch" in rng:
         torch.set_rng_state(rng["torch"])
-    if "torch_cuda" in rng and torch.cuda.is_available() and rng["torch_cuda"]:
+    if train_state_restored and "torch_cuda" in rng and torch.cuda.is_available() and rng["torch_cuda"]:
         torch.cuda.set_rng_state_all(rng["torch_cuda"])
 
     return {
         "step": data["step"],
         "epoch": data["epoch"],
         "metrics": data.get("metrics", {}),
+        "train_state_restored": train_state_restored,
     }
 
 

@@ -175,6 +175,18 @@ class TestPoseEmbeds:
         ones_1 = attn_mask[1].sum().item()
         assert ones_0 > ones_1
 
+    def test_encode_pooled_returns_batch_embeddings(self, model):
+        src = torch.randn(3, 24, 312)
+        src_lengths = torch.tensor([24, 20, 16], dtype=torch.long)
+        pooled = model.encode_pooled(src, src_lengths)
+        assert pooled.shape == (3, TINY_CONFIG.d_model)
+
+    def test_encode_pooled_normalizes_embeddings_by_default(self, model):
+        src, src_lengths = _random_batch(B=2, T=24)
+        pooled = model.encode_pooled(src, src_lengths)
+        norms = torch.linalg.norm(pooled, dim=-1)
+        assert torch.allclose(norms, torch.ones_like(norms), atol=1e-5)
+
 
 class TestGenerate:
     def test_generate_returns_token_ids(self, model):

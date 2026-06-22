@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Thai Sign Translator - Model Report</title>
+<style>
+  :root{
+    --bg:#0f1117; --panel:#171b24; --panel-soft:#1c2230; --line:#2a3141;
+    --text:#e7ecf3; --muted:#9aa4b2; --accent:#58a6ff; --good:#3fb950;
+    --warn:#d29922; --bad:#f85149; --mono:Consolas,Menlo,monospace;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;background:var(--bg);color:var(--text);
+    font-family:"Segoe UI","Noto Sans Thai",system-ui,sans-serif;line-height:1.55;
+  }
+  .wrap{max-width:1100px;margin:0 auto;padding:40px 24px 72px}
+  header{padding-bottom:28px;border-bottom:1px solid var(--line)}
+  .eyebrow{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+  h1{margin:8px 0 6px;font-size:34px;line-height:1.15}
+  .sub{max-width:820px;color:var(--muted)}
+  .meta{display:flex;gap:18px;flex-wrap:wrap;margin-top:18px;font-size:13px;color:var(--muted)}
+  .meta b{color:var(--text)}
+  h2{margin:36px 0 14px;font-size:22px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px}
+  .card h3{margin:0 0 8px;font-size:15px}
+  .stat{font-size:30px;font-weight:700;line-height:1}
+  .hint{margin-top:8px;font-size:12px;color:var(--muted)}
+  .callout{background:linear-gradient(180deg,#162032,#141b28);border:1px solid #28405f;border-radius:12px;padding:18px 20px}
+  .callout.warn{background:linear-gradient(180deg,#2b2215,#211b13);border-color:#5a4724}
+  .section-note{margin:8px 0 0;color:var(--muted);font-size:13px}
+  table{width:100%;border-collapse:collapse;background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+  th,td{padding:12px 14px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+  th{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+  td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;font-family:var(--mono)}
+  tr:last-child td{border-bottom:none}
+  code{font-family:var(--mono);font-size:12.5px;background:#10141d;padding:2px 6px;border-radius:6px}
+  .badge{display:inline-block;padding:4px 10px;border-radius:999px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;border:1px solid transparent}
+  .ok{color:var(--good);background:rgba(63,185,80,.12);border-color:rgba(63,185,80,.35)}
+  .warnb{color:var(--warn);background:rgba(210,153,34,.12);border-color:rgba(210,153,34,.35)}
+  .bad{color:var(--bad);background:rgba(248,81,73,.12);border-color:rgba(248,81,73,.35)}
+  ul{padding-left:20px;margin:10px 0 0}
+  li{margin:6px 0}
+  .stack{display:grid;gap:14px}
+  .split{display:grid;grid-template-columns:1.15fr .85fr;gap:14px}
+  .mini{background:var(--panel-soft);border:1px solid var(--line);border-radius:10px;padding:14px}
+  .mini h4{margin:0 0 8px;font-size:14px}
+  .bar-row{display:grid;grid-template-columns:130px 1fr 64px;gap:12px;align-items:center;margin:10px 0}
+  .track{height:18px;background:#10141d;border-radius:999px;overflow:hidden}
+  .fill{height:100%;border-radius:999px}
+  .mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+  .footer{margin-top:42px;padding-top:18px;border-top:1px solid var(--line);font-size:12px;color:var(--muted)}
+  @media (max-width:760px){
+    .split{grid-template-columns:1fr}
+    .bar-row{grid-template-columns:105px 1fr 54px}
+    h1{font-size:28px}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Model Report</div>
+    <h1>Thai Sign Translator - Latest Cloud-Verified Model</h1>
+    <div class="sub">
+      รายงานนี้สรุปโมเดลล่าสุดที่ผ่าน readiness gate แล้วจาก artifact จริงใน
+      <code>tmp/kaggle_kernel_output/pose_t5_tsl51_tune3</code>
+      โดยอิงจาก evaluation, train metrics, source sampling และตัวอย่าง prediction ล่าสุดจาก Kaggle run วันที่ 2026-06-21
+    </div>
+    <div class="meta">
+      <span><b>Model:</b> PoseToTextT5</span>
+      <span><b>Base:</b> google/mt5-small</span>
+      <span><b>Export:</b> tmp/kaggle_kernel_output/pose_t5_tsl51_tune3</span>
+      <span><b>Report date:</b> 2026-06-21</span>
+    </div>
+  </header>
+
+  <h2>1. Summary</h2>
+  <div class="callout">
+    โมเดลรอบล่าสุดผ่าน readiness gate แล้วใน validation subset ของ <code>TSL-51</code>:
+    <b>chrF 94.4</b>, <b>BLEU 94.79</b>, และ <b>exact match 80.0%</b> (20/25).
+    รอบนี้ชนะทั้ง incumbent เดิม (<code>64.0%</code> exact) และรอบ cloud ก่อนหน้า (<code>72.0%</code> exact)
+    และเป็นรอบแรกที่แตะ threshold พร้อมใช้งานตามเกณฑ์ใน repo นี้.
+  </div>
+
+  <div class="grid" style="margin-top:14px">
+    <div class="card">
+      <h3>Readiness</h3>
+      <div class="stat">Passed</div>
+      <div class="hint"><span class="badge ok">Ready</span> promotion_status.ready = true</div>
+    </div>
+    <div class="card">
+      <h3>Latest verified exact</h3>
+      <div class="stat">80.0%</div>
+      <div class="hint">20 / 25 examples</div>
+    </div>
+    <div class="card">
+      <h3>Latest verified chrF</h3>
+      <div class="stat">94.4</div>
+      <div class="hint">BLEU 94.79</div>
+    </div>
+    <div class="card">
+      <h3>Resume delta</h3>
+      <div class="stat">+325</div>
+      <div class="hint">optimizer steps from 3075 to 3400</div>
+    </div>
+  </div>
+
+  <h2>2. Model Identity</h2>
+  <table>
+    <tbody>
+      <tr><th>Export directory</th><td><code>tmp/kaggle_kernel_output/pose_t5_tsl51_tune3</code></td></tr>
+      <tr><th>Primary runtime files</th><td><code>model.safetensors</code>, <code>pose_encoder.pt</code>, <code>config.json</code>, <code>generation_config.json</code>, <code>tokenizer.json</code>, <code>tokenizer_config.json</code></td></tr>
+      <tr><th>Model file size</th><td><span class="mono">1,200,729,512</span> bytes (<code>model.safetensors</code>)</td></tr>
+      <tr><th>Pose encoder size</th><td><span class="mono">30,064,567</span> bytes (<code>pose_encoder.pt</code>)</td></tr>
+      <tr><th>Base model</th><td><code>google/mt5-small</code></td></tr>
+      <tr><th>Feature input</th><td><code>312</code> dims, 2 encoder layers, dropout <code>0.1</code>, downsample factor <code>4</code></td></tr>
+      <tr><th>Cloud output timestamp</th><td>2026-06-21 07:15 (Asia/Bangkok local artifact time)</td></tr>
+    </tbody>
+  </table>
+
+  <h2>3. Training Delta That Cleared The Gate</h2>
+  <div class="split">
+    <div class="stack">
+      <table>
+        <thead>
+          <tr><th>Field</th><th class="num">Value</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Resume step</td><td class="num">3075</td></tr>
+          <tr><td>Final step</td><td class="num">3400</td></tr>
+          <tr><td>New optimizer steps</td><td class="num">325</td></tr>
+          <tr><td>Stop reason</td><td class="num">early_stopping</td></tr>
+          <tr><td>Best chrF during resumed run</td><td class="num">94.4040</td></tr>
+          <tr><td>Best val loss during resumed run</td><td class="num">0.1049</td></tr>
+          <tr><td>Last logged val loss</td><td class="num">0.1077</td></tr>
+          <tr><td>Last logged val chrF</td><td class="num">92.8296</td></tr>
+        </tbody>
+      </table>
+      <div class="section-note">
+        รอบนี้ไม่ได้ชนะด้วย decode search เพิ่มเติม แต่ชนะจาก training regime ใหม่ที่บูสต์ตัวอย่างซึ่งมี target token สับบ่อย.
+      </div>
+    </div>
+    <div class="card">
+      <h3>Focus-token weighting</h3>
+      <div class="bar-row">
+        <span>focus examples</span>
+        <div class="track"><div class="fill" style="width:69%;background:var(--good)"></div></div>
+        <span class="num">157</span>
+      </div>
+      <div class="bar-row">
+        <span>train total</span>
+        <div class="track"><div class="fill" style="width:100%;background:var(--accent)"></div></div>
+        <span class="num">227</span>
+      </div>
+      <div class="hint">รอบนี้ใช้ <code>focus_only</code> sampling; ปิด source balancing และบูสต์ token เสี่ยงแทน</div>
+      <ul>
+        <li><code>ฉัน</code>: count 92, multiplier 1.0x</li>
+        <li><code>คุณ</code>: count 47, multiplier 1.96x</li>
+        <li><code>แม่</code>: count 17, multiplier 3.0x</li>
+        <li><code>พี่</code>: count 19, multiplier 3.0x</li>
+        <li><code>วันนี้</code>: count 2, multiplier 3.0x</li>
+        <li><code>พรุ่งนี้</code>: count 3, multiplier 3.0x</li>
+      </ul>
+    </div>
+  </div>
+
+  <h2>4. Data Profile</h2>
+  <div class="split">
+    <div class="stack">
+      <table>
+        <thead>
+          <tr><th>Field</th><th class="num">Value</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Train examples</td><td class="num">227</td></tr>
+          <tr><td>Validation examples</td><td class="num">25</td></tr>
+          <tr><td>Unique train targets</td><td class="num">62</td></tr>
+          <tr><td>Unique val targets</td><td class="num">24</td></tr>
+          <tr><td>Target overlap count</td><td class="num">24</td></tr>
+          <tr><td>Target overlap ratio</td><td class="num">1.0</td></tr>
+          <tr><td>Train examples per target</td><td class="num">3.6613</td></tr>
+          <tr><td>Repeated train target fraction</td><td class="num">1.0</td></tr>
+          <tr><td>Video overlap count</td><td class="num">0</td></tr>
+          <tr><td>Split policy</td><td class="num">manifest</td></tr>
+        </tbody>
+      </table>
+      <div class="section-note">
+        Manifest-quality ผ่านเต็ม: ไม่มี video leakage, target overlap เพียงพอ, และ train density ไม่บางเกินไปสำหรับ readiness gate.
+      </div>
+    </div>
+    <div class="card">
+      <h3>Validation source</h3>
+      <div class="bar-row">
+        <span>tsl51</span>
+        <div class="track"><div class="fill" style="width:100%;background:var(--accent)"></div></div>
+        <span class="num">25</span>
+      </div>
+      <div class="hint">รายงานรอบนี้ยังประเมินบน <code>data/tsl51_v3</code> เท่านั้น</div>
+      <ul>
+        <li>required_sources = <code>tsl51</code></li>
+        <li>source_counts = <code>{ "tsl51": 25 }</code></li>
+        <li>ไม่มี source อื่นใน validation subset นี้</li>
+      </ul>
+    </div>
+  </div>
+
+  <h2>5. Evaluation</h2>
+  <div class="split">
+    <table>
+      <thead>
+        <tr><th>Metric</th><th class="num">Score</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>chrF</td><td class="num">94.4</td></tr>
+        <tr><td>BLEU</td><td class="num">94.79</td></tr>
+        <tr><td>Exact match</td><td class="num">20 / 25</td></tr>
+        <tr><td>Exact match percentage</td><td class="num">80.0%</td></tr>
+        <tr><td>Mean hypothesis length</td><td class="num">16.9</td></tr>
+        <tr><td>Ready threshold: chrF</td><td class="num">>= 80.0</td></tr>
+        <tr><td>Ready threshold: exact</td><td class="num">>= 80.0%</td></tr>
+      </tbody>
+    </table>
+    <table>
+      <thead>
+        <tr>
+          <th>Comparison</th>
+          <th class="num">chrF</th>
+          <th class="num">BLEU</th>
+          <th class="num">Exact %</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Incumbent baseline</td>
+          <td class="num">86.95</td>
+          <td class="num">89.38</td>
+          <td class="num">64.0</td>
+        </tr>
+        <tr>
+          <td>Previous cloud run</td>
+          <td class="num">90.37</td>
+          <td class="num">91.82</td>
+          <td class="num">72.0</td>
+        </tr>
+        <tr>
+          <td>Latest cloud run</td>
+          <td class="num">94.4</td>
+          <td class="num">94.79</td>
+          <td class="num">80.0</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card" style="margin-top:14px">
+    <h3>Decoding configuration that won on the latest export</h3>
+    <table style="margin:0;border:none;background:transparent">
+      <thead>
+        <tr><th>Field</th><th class="num">Value</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Label</td><td class="num">baseline</td></tr>
+        <tr><td>max_new_tokens</td><td class="num">72</td></tr>
+        <tr><td>beam_size</td><td class="num">5</td></tr>
+        <tr><td>no_repeat_ngram_size</td><td class="num">3</td></tr>
+        <tr><td>repetition_penalty</td><td class="num">1.5</td></tr>
+        <tr><td>length_penalty</td><td class="num">0.7</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>6. Example Predictions</h2>
+  <div class="card">
+    <table style="margin:0;border:none;background:transparent">
+      <thead>
+        <tr><th>Reference</th><th>Hypothesis</th><th class="num">Score</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>กรุงเทพ ฉัน เที่ยว ชอบ</td><td>กรุงเทพ ฉัน เที่ยว ชอบ</td><td class="num">0.6821</td></tr>
+        <tr><td>ขนมปัง แม่ กิน</td><td>ขนมปัง แม่ กิน</td><td class="num">0.9510</td></tr>
+        <tr><td>ไข่ แม่ กิน ชอบ</td><td>ไข่ แม่ กิน ชอบ</td><td class="num">0.7219</td></tr>
+        <tr><td>กรุงเทพ แม่ เที่ยว ชอบ</td><td>กรุงเทพ พี่ เที่ยว ชอบ</td><td class="num">0.7283</td></tr>
+        <tr><td>ฉัน ข้าว กิน</td><td>คุณ ข้าว กิน</td><td class="num">0.9512</td></tr>
+        <tr><td>วันนี้ คุณ ข้าว กิน ไป ที่ไหน</td><td>พรุ่งนี้ คุณ ข้าว กิน ไป ที่ไหน</td><td class="num">0.9153</td></tr>
+      </tbody>
+    </table>
+    <div class="section-note">
+      แม้ readiness จะผ่านแล้ว แต่ error ที่เหลือยังชัดว่าเป็นกลุ่ม role/time token confusion: <code>แม่/พี่</code>, <code>ฉัน/คุณ</code>, และ <code>วันนี้/พรุ่งนี้</code>
+    </div>
+  </div>
+
+  <h2>7. Status and Residual Risk</h2>
+  <div class="grid">
+    <div class="card">
+      <h3>What is now true</h3>
+      <div class="hint"><span class="badge ok">Confirmed</span> latest export is usable</div>
+      <ul>
+        <li>readiness gate ผ่านแล้ว</li>
+        <li>มี runtime artifacts ครบ</li>
+        <li>มี verified evaluation และ decoding search รองรับ</li>
+        <li>ชนะ incumbent เดิมในทุก metric หลัก</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>What is still limited</h3>
+      <div class="hint"><span class="badge warnb">Scope</span> this report is still TSL-51 centric</div>
+      <ul>
+        <li>validation ชุดนี้ไม่มี ThaiSignVis หรือ YouTube-SL-25</li>
+        <li>exact ผ่าน threshold แบบเฉียดเส้นที่ 80.0%</li>
+        <li>ยังเหลือ confusion บางคู่ใน sample จริง</li>
+        <li><code>best_checkpoint.txt</code> และ <code>latest_checkpoint.txt</code> ใน output ไม่สะท้อน export ที่ดีที่สุดตรงๆ</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="callout warn" style="margin-top:14px">
+    ข้อสรุปเชิงวิศวกรรม: โมเดลนี้ควรถูกถือเป็น <b>latest usable model</b> ของโปรเจกต์ในตอนนี้
+    แต่ถ้าจะอ้างความพร้อมใช้งานนอกโดเมน <code>TSL-51</code> ยังต้องเพิ่ม evaluation coverage ให้แหล่งข้อมูลอื่น
+    และถ้าจะดัน quality ต่อ รอบถัดไปควรแก้ที่ confusion pair เฉพาะจุด ไม่ใช่ยืด runtime decode อย่างเดียว.
+  </div>
+
+  <div class="footer">
+    Sources:
+    <code>tmp/kaggle_kernel_output/pose_t5_tsl51_tune3/verified_eval.json</code>,
+    <code>tmp/kaggle_kernel_output/pose_t5_tsl51_tune3/verified_samples.json</code>,
+    <code>tmp/kaggle_kernel_output/pose_t5_tsl51_tune3/decoding_best_eval.json</code>,
+    <code>tmp/kaggle_kernel_output/pose_t5_tsl51_tune3/source_sampling.json</code>,
+    <code>tmp/kaggle_kernel_output/pose_t5_tsl51_tune3/train_metrics.json</code>,
+    <code>tmp/kaggle_kernel_output/pose_t5_tsl51_tune3/manifest_quality.json</code>
+  </div>
+</div>
+</body>
+</html>

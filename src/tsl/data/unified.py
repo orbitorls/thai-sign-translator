@@ -1,12 +1,14 @@
-"""Unified manifest loader that enforces the v3-312 feature contract."""
+"""Unified manifest loader for canonical 312-dim and raw holistic features."""
 from __future__ import annotations
 
 import os
+import re
 
 import numpy as np
 import pandas as pd
 
 from tsl.data.manifest import SignTextExample
+from tsl.features.normalize import normalize_sequence
 
 __all__ = [
     "MANIFEST_FILENAME",
@@ -29,6 +31,25 @@ _COL_FEATURE_LAYOUT_VERSION = "feature_layout_version"
 _REQUIRED_COLUMNS = {_COL_SEGMENT_ID, _COL_NPY_PATH, _COL_TEXT, _COL_FEATURE_LAYOUT_VERSION}
 
 _FEATURE_LAYOUT_PREFIX = "v3-312"
+_RAW_HOLISTIC_LAYOUT = "raw_mediapipe_543x3"
+
+
+def _infer_source_name(data_root: str) -> str:
+    basename = os.path.basename(os.path.normpath(data_root))
+    if not basename:
+        return "unified"
+    lowered = basename.lower().replace("-", "_")
+    if "thaisignvis" in lowered:
+        return "thaisignvis"
+    if "youtube_sl25_thai" in lowered or ("youtube" in lowered and "sl25" in lowered and "thai" in lowered):
+        return "youtube_sl25_thai"
+    if "youtube_sl25" in lowered:
+        return "youtube_sl25"
+    if "tsl51" in lowered:
+        return "tsl51"
+    normalized = re.sub(r"(_v\d+(?:[-_].*)?)$", "", basename)
+    normalized = normalized.strip("_-")
+    return normalized or basename
 
 
 def load_manifest(
@@ -59,7 +80,7 @@ def load_manifest(
         If ``manifest.csv`` does not exist in ``data_root``.
     ValueError
         If any required column is missing, or if any row's
-        ``feature_layout_version`` does not start with ``"v3-312"``.
+        ``feature_layout_version`` is not a supported layout.
     """
     manifest_path = os.path.join(data_root, MANIFEST_FILENAME)
     if not os.path.isfile(manifest_path):
@@ -74,11 +95,10 @@ def load_manifest(
     # Enforce feature_layout_version for every row before filtering
     for idx, row in df.iterrows():
         version = str(row[_COL_FEATURE_LAYOUT_VERSION])
-        if not version.startswith(_FEATURE_LAYOUT_PREFIX):
+        if not _is_supported_feature_layout(version):
             raise ValueError(
-                f"Row {idx}: feature_layout_version {version!r} does not start "
-                f"with {_FEATURE_LAYOUT_PREFIX!r}. "
-                "Only v3-312 features are accepted by this loader."
+                f"Row {idx}: feature_layout_version {version!r} is not supported. "
+                f"Expected {_FEATURE_LAYOUT_PREFIX!r} prefix or {_RAW_HOLISTIC_LAYOUT!r}."
             )
 
     if split is not None and _COL_SPLIT in df.columns:
@@ -96,14 +116,18 @@ def load_manifest(
         if not text:
             continue
 
-        npy_path = str(row[_COL_NPY_PATH])
+        npy_path = str(row[_COL_NPY_PATH]).replace("\\", "/")
         if not os.path.isabs(npy_path):
             npy_path = os.path.join(data_root, npy_path)
         if not os.path.isfile(npy_path):
             continue
 
         row_split = str(row.get(_COL_SPLIT, "train")) if _COL_SPLIT in row.index else "train"
-        row_source = str(row.get(_COL_SOURCE, "unified")) if _COL_SOURCE in row.index else "unified"
+        row_source = (
+            str(row.get(_COL_SOURCE, _infer_source_name(data_root)))
+            if _COL_SOURCE in row.index
+            else _infer_source_name(data_root)
+        )
 
         examples.append(
             SignTextExample(
@@ -122,7 +146,7 @@ def load_manifest(
 
 
 def load_features(npy_path: str) -> np.ndarray:
-    """Load a (T, 312) float32 landmark array from a cached .npy file.
+    """Load or normalize pose features into a ``(T, 312)`` float32 array.
 
     Parameters
     ----------
@@ -137,13 +161,15 @@ def load_features(npy_path: str) -> np.ndarray:
     Raises
     ------
     ValueError
-        If the loaded array does not have shape ``(T, 312)``.
+        If the loaded array does not match a supported feature shape.
     """
     arr = np.load(npy_path)
+    if arr.ndim == 3 and arr.shape[1:] == (543, 3):
+        return normalize_sequence(arr)
     if arr.ndim != 2 or arr.shape[1] != CANONICAL_FEATURE_DIM:
         raise ValueError(
             f"unexpected shape {arr.shape} in {npy_path!r}; "
-            f"expected (T, {CANONICAL_FEATURE_DIM})"
+            f"expected (T, {CANONICAL_FEATURE_DIM}) or (T, 543, 3)"
         )
     return arr.astype(np.float32)
 
@@ -155,3 +181,7 @@ def _check_columns(df: pd.DataFrame, path: str) -> None:
             f"manifest {path!r} is missing columns: {missing}\n"
             f"Found: {list(df.columns)}"
         )
+
+
+def _is_supported_feature_layout(version: str) -> bool:
+    return version.startswith(_FEATURE_LAYOUT_PREFIX) or version == _RAW_HOLISTIC_LAYOUT
