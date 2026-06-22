@@ -180,7 +180,9 @@ def _run_smoke_training(kaggle_args: argparse.Namespace, *, train_main) -> dict 
     smoke_args.out_dir = str(smoke_dir)
     smoke_args.max_train_steps = smoke_steps
     smoke_args.require_gpu = True
-    smoke_args.epochs = max(1, min(int(getattr(kaggle_args, "epochs", 1) or 1), 1))
+    # Use a large epoch ceiling so the epoch limit never stops smoke before max_train_steps.
+    # Without this, a warm-start seed at epoch=76 with epochs=1 would take 0 steps.
+    smoke_args.epochs = 100000
     smoke_args.eval_steps = max(1, smoke_steps)
     smoke_args.checkpoint_steps = max(1, smoke_steps)
     smoke_args.allow_noop_resume = "false"
