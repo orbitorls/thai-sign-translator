@@ -19,6 +19,7 @@ function Invoke-Kaggle {
     }
     $env:TEMP = (Resolve-Path $KaggleTempDir).Path
     $env:TMP = $env:TEMP
+    $env:PYTHONUTF8 = "1"
     & python.exe "-m" "kaggle" $CliArgs
 }
 
