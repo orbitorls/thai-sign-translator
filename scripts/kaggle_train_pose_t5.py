@@ -429,6 +429,18 @@ def _build_kaggle_parser() -> argparse.ArgumentParser:
         default="",
         help="Optional output JSON path for the cloud dataset preflight report.",
     )
+    p.add_argument(
+        "--raw-required-files",
+        type=str,
+        default="manifest.csv,manifest_quality.json,features.zip",
+        help="Comma-separated list of files required in the raw (pre-unzip) dataset root.",
+    )
+    p.add_argument(
+        "--staged-required-files",
+        type=str,
+        default="manifest.csv,manifest_quality.json",
+        help="Comma-separated list of files required after staging (post-unzip) dataset root.",
+    )
     return p
 
 
@@ -447,12 +459,14 @@ def main() -> None:
 
     kaggle_args = _build_kaggle_parser().parse_args()
     raw_data_roots = kaggle_args.data_roots
+    raw_required = tuple(f.strip() for f in kaggle_args.raw_required_files.split(",") if f.strip())
+    staged_required = tuple(f.strip() for f in kaggle_args.staged_required_files.split(",") if f.strip())
     raw_preflight_report = verify_cloud_preflight(
         raw_data_roots,
         expected_manifest_rows=int(getattr(kaggle_args, "expected_manifest_rows", 0) or 0),
         expected_resolved_examples=int(getattr(kaggle_args, "expected_resolved_examples", 0) or 0),
         expected_source_counts=str(getattr(kaggle_args, "expected_source_counts", "")),
-        required_files=("manifest.csv", "manifest_quality.json", "features.zip"),
+        required_files=raw_required,
     )
     kaggle_args.data_roots = _prepare_data_roots(raw_data_roots)
     if getattr(kaggle_args, "eval_data_roots", ""):
@@ -462,7 +476,7 @@ def main() -> None:
         expected_manifest_rows=int(getattr(kaggle_args, "expected_manifest_rows", 0) or 0),
         expected_resolved_examples=int(getattr(kaggle_args, "expected_resolved_examples", 0) or 0),
         expected_source_counts=str(getattr(kaggle_args, "expected_source_counts", "")),
-        required_files=("manifest.csv", "manifest_quality.json"),
+        required_files=staged_required,
     )
     preflight_report = _merge_preflight_reports(raw_preflight_report, staged_preflight_report)
     preflight_report_path = (
