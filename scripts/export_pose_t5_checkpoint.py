@@ -13,9 +13,12 @@ from transformers import AutoTokenizer
 
 
 _REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-_SRC_ROOT = os.path.join(_REPO_ROOT, "src")
-if _SRC_ROOT not in sys.path:
-    sys.path.insert(0, _SRC_ROOT)
+if _REPO_ROOT not in sys.path:
+    sys.path.insert(0, _REPO_ROOT)
+
+from scripts._bootstrap import ensure_repo_paths
+
+ensure_repo_paths()
 
 from tsl.models.pose_t5 import PoseToTextT5
 from tsl.train.checkpointing import find_best_checkpoint

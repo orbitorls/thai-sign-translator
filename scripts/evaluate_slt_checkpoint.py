@@ -8,9 +8,12 @@ import sys
 
 
 _REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-_SRC_ROOT = os.path.join(_REPO_ROOT, "src")
-if _SRC_ROOT not in sys.path:
-    sys.path.insert(0, _SRC_ROOT)
+if _REPO_ROOT not in sys.path:
+    sys.path.insert(0, _REPO_ROOT)
+
+from scripts._bootstrap import ensure_repo_paths
+
+ensure_repo_paths()
 
 from tsl.eval.manifest_quality import ManifestQualityThresholds, analyze_manifest_quality
 from tsl.eval.slt_metrics import evaluate_slt

@@ -10,9 +10,42 @@ __pycache__/
 
 # Frontend install output
 frontend/node_modules/
+frontend/dist/
+
+# Rust build output
+tools/keypoint-extractor/target/
 
 # Temporary runtime output
 tmp/
+tmp_pytest/
+.playwright-mcp/
+output/
+smoke_*/
+thai-sign-*/
+
+# Generated training / dataset artifacts
+checkpoints/
+checkpoints*
+checkpoints\?*
+data/
+kaggle_upload/
+
+# Root notebooks / ad-hoc reports
+colab-*.ipynb
+!docs/notebooks/colab-*.ipynb
+
+# Model and checkpoint weights
+*.pt
+*.pth
+*.ckpt
+*.safetensors
+
+# Logs
+*.log
+
+# Local repo inventory / cleanup outputs
+repo_inventory*.json
+repo_cleanup_plan*.json
 
 # OS/editor noise
 .DS_Store

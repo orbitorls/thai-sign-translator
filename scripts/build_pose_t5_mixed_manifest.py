@@ -10,11 +10,12 @@ from pathlib import Path
 
 
 _REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-_SRC_ROOT = os.path.join(_REPO_ROOT, "src")
 if _REPO_ROOT not in sys.path:
     sys.path.insert(0, _REPO_ROOT)
-if _SRC_ROOT not in sys.path:
-    sys.path.insert(0, _SRC_ROOT)
+
+from scripts._bootstrap import ensure_repo_paths
+
+ensure_repo_paths()
 
 import pandas as pd
 

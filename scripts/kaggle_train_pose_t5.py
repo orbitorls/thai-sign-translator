@@ -44,6 +44,12 @@ import subprocess
 import sys
 import zipfile
 
+_REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if _REPO_ROOT not in sys.path:
+    sys.path.insert(0, _REPO_ROOT)
+
+from scripts._bootstrap import ensure_repo_paths
+
 # ---------------------------------------------------------------------------
 # Kaggle-specific paths — edit these to match your attached datasets
 # ---------------------------------------------------------------------------
@@ -87,13 +93,7 @@ def _ensure_dependencies() -> None:
 
 def _setup_pythonpath() -> None:
     """Ensure src/ is on sys.path so ``tsl.*`` imports resolve."""
-    repo_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    src_dir = os.path.join(repo_root, "src")
-    if src_dir not in sys.path:
-        sys.path.insert(0, src_dir)
-    # Also make repo root available for config.py
-    if repo_root not in sys.path:
-        sys.path.insert(0, repo_root)
+    ensure_repo_paths()
 
 
 def _resolve_bool_flag(value) -> bool:

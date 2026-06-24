@@ -13,11 +13,12 @@ import pandas as pd
 
 
 _REPO_ROOT = Path(__file__).resolve().parent.parent
-_SRC_ROOT = _REPO_ROOT / "src"
 if str(_REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(_REPO_ROOT))
-if str(_SRC_ROOT) not in sys.path:
-    sys.path.insert(0, str(_SRC_ROOT))
+
+from scripts._bootstrap import ensure_repo_paths
+
+ensure_repo_paths()
 
 from tsl.data.unified import load_manifest
 
