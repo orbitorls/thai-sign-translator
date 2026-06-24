@@ -13,6 +13,7 @@ function Translator() {
   const { models, selectedModelId, loading: modelsLoading, error: modelsError, setSelectedModelId } = useModels();
   const capture = useHolisticCapture();
   const translator = useTranslate();
+  const selectedModel = models.find((model) => model.id === selectedModelId);
 
   function handleToggleRecord() {
     if (capture.recording) {
@@ -50,73 +51,105 @@ function Translator() {
   const showNoFrames = !capture.recording && translator.status === "idle" && capture.frameCount === 0 && capture.ready;
 
   return (
-    <main
-      style={{
-        maxWidth: "var(--max-width)",
-        margin: "0 auto",
-        padding: "var(--space-6) var(--space-4)",
-        display: "flex",
-        flexDirection: "column",
-        gap: "var(--space-6)",
-        minHeight: "100dvh",
-      }}
-    >
-      {/* Header */}
-      <header style={{ textAlign: "center" }}>
-        <h1
+    <main className="app-shell">
+      <header className="app-header">
+        <div className="brand-lockup">
+          <div className="brand-mark" aria-hidden="true">TS</div>
+          <div style={{ minWidth: 0 }}>
+            <h1
+              style={{
+                fontSize: "var(--font-size-xl)",
+                fontWeight: 700,
+                color: "var(--color-text)",
+                lineHeight: 1.25,
+              }}
+            >
+              {th.appTitle}
+            </h1>
+            <p style={{ color: "var(--color-text-muted)", fontSize: "var(--font-size-sm)" }}>
+              {selectedModel?.label_th ?? th.appSubtitle}
+            </p>
+          </div>
+        </div>
+        <span
           style={{
-            fontSize: "var(--font-size-2xl)",
-            fontWeight: 700,
-            color: "var(--color-primary)",
+            color: capture.ready ? "var(--color-success)" : "var(--color-text-muted)",
+            fontSize: "var(--font-size-sm)",
+            fontWeight: 600,
+            whiteSpace: "nowrap",
           }}
         >
-          {th.appTitle}
-        </h1>
-        <p style={{ color: "var(--color-text-muted)", fontSize: "var(--font-size-sm)", marginTop: "var(--space-1)" }}>
-          {th.appSubtitle}
-        </p>
+          {capture.ready ? th.cameraReady : th.cameraInit}
+        </span>
       </header>
 
-      {/* Camera */}
-      <CameraView videoRef={capture.videoRef} recording={capture.recording} />
+      <div className="chat-layout">
+        <aside className="side-panel" aria-label={th.cameraPanelLabel}>
+          <CameraView videoRef={capture.videoRef} recording={capture.recording} />
+          {modelsLoading ? (
+            <p style={{ color: "var(--color-text-muted)", fontSize: "var(--font-size-sm)" }}>
+              {th.modelLoading}
+            </p>
+          ) : (
+            <ModelPicker
+              models={models}
+              selectedId={selectedModelId}
+              onChange={setSelectedModelId}
+              disabled={capture.recording || translator.status === "loading"}
+            />
+          )}
+        </aside>
 
-      {/* Model picker */}
-      {modelsLoading ? (
-        <p style={{ textAlign: "center", color: "var(--color-text-muted)", fontSize: "var(--font-size-sm)" }}>
-          {th.modelLoading}
-        </p>
-      ) : (
-        <ModelPicker
-          models={models}
-          selectedId={selectedModelId}
-          onChange={setSelectedModelId}
-          disabled={capture.recording || translator.status === "loading"}
-        />
-      )}
+        <section className="chat-main" aria-label={th.chatPanelLabel}>
+          <div className="chat-thread">
+            <div className="message-row">
+              <div className="message-bubble">
+                <p style={{ color: "var(--color-text-muted)", fontSize: "var(--font-size-sm)", marginBottom: "var(--space-2)" }}>
+                  {th.assistantLabel}
+                </p>
+                <p style={{ fontSize: "var(--font-size-lg)", fontWeight: 600, color: "var(--color-text)" }}>
+                  {th.appSubtitle}
+                </p>
+              </div>
+            </div>
 
-      {/* Record button */}
-      <div style={{ display: "flex", justifyContent: "center" }}>
-        <RecordButton
-          recording={capture.recording}
-          disabled={isDisabled}
-          frameCount={capture.recording ? capture.frameCount : undefined}
-          onClick={handleToggleRecord}
-        />
+            <div className="message-row user">
+              <div className="message-bubble">
+                <p style={{ color: "var(--color-text-muted)", fontSize: "var(--font-size-sm)", marginBottom: "var(--space-2)" }}>
+                  {th.cameraPanelLabel}
+                </p>
+                <p style={{ fontSize: "var(--font-size-base)", fontWeight: 600 }}>
+                  {capture.recording
+                    ? `${th.recording} ${th.frames(capture.frameCount)}`
+                    : selectedModel?.label_th ?? th.modelLabel}
+                </p>
+              </div>
+            </div>
+
+            <div className="message-row">
+              <ResultCard
+                status={translator.status}
+                result={translator.result}
+                error={translator.error}
+                errorStatus={translator.errorStatus}
+              />
+            </div>
+          </div>
+
+          <div className="composer">
+            <StatusBar
+              message={statusMsg || (showNoFrames ? th.noFrames : "")}
+              type={statusType}
+            />
+            <RecordButton
+              recording={capture.recording}
+              disabled={isDisabled}
+              frameCount={capture.recording ? capture.frameCount : undefined}
+              onClick={handleToggleRecord}
+            />
+          </div>
+        </section>
       </div>
-
-      {/* Status bar */}
-      <StatusBar
-        message={statusMsg || (showNoFrames ? th.noFrames : "")}
-        type={statusType}
-      />
-
-      {/* Result */}
-      <ResultCard
-        status={translator.status}
-        result={translator.result}
-        error={translator.error}
-        errorStatus={translator.errorStatus}
-      />
     </main>
   );
 }

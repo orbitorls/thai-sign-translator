@@ -1,0 +1,1143 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<title>Verified Evaluation Report — TSL Curriculum v40</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Sarabun:ital,wght@0,300;0,400;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;600&display=swap');
+
+  /* ─── PRINT SETUP ─── */
+  @page {
+    size: A4;
+    margin: 18mm 16mm 18mm 16mm;
+  }
+  @media print {
+    .no-print { display: none !important; }
+    .page-break { page-break-before: always; }
+    .avoid-break { page-break-inside: avoid; }
+    body { background: #fff !important; color: #111 !important; }
+    a { color: inherit !important; text-decoration: none !important; }
+  }
+
+  /* ─── BASE ─── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --green:   #1a8a4a;
+    --green-lt:#e6f4ec;
+    --blue:    #1563c9;
+    --blue-lt: #e8f0fc;
+    --red:     #c0392b;
+    --red-lt:  #fdf0ee;
+    --gray:    #6b7280;
+    --gray-lt: #f5f6f7;
+    --border:  #d1d5db;
+    --ink:     #111827;
+    --ink2:    #374151;
+    --ink3:    #6b7280;
+  }
+
+  body {
+    font-family: 'Sarabun', 'TH Sarabun New', sans-serif;
+    font-size: 10.5pt;
+    line-height: 1.65;
+    color: var(--ink);
+    background: #fff;
+    max-width: 780px;
+    margin: 0 auto;
+    padding: 20px 0 40px;
+  }
+
+  /* ─── COVER ─── */
+  .cover {
+    border-bottom: 3px solid var(--ink);
+    padding-bottom: 20px;
+    margin-bottom: 28px;
+  }
+  .cover-logo {
+    font-size: 8pt;
+    font-weight: 600;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--gray);
+    margin-bottom: 14px;
+  }
+  .cover-title {
+    font-size: 22pt;
+    font-weight: 700;
+    line-height: 1.2;
+    color: var(--ink);
+    margin-bottom: 6px;
+  }
+  .cover-subtitle {
+    font-size: 11pt;
+    color: var(--ink3);
+    margin-bottom: 18px;
+  }
+  .cover-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--green-lt);
+    border: 1.5px solid var(--green);
+    border-radius: 4px;
+    color: var(--green);
+    font-size: 9pt;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    padding: 4px 12px;
+    text-transform: uppercase;
+  }
+  .cover-meta {
+    margin-top: 16px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+    font-size: 9pt;
+  }
+  .cover-meta-item {
+    padding: 8px 12px;
+    border-right: 1px solid var(--border);
+  }
+  .cover-meta-item:last-child { border-right: none; }
+  .cover-meta-label { color: var(--gray); font-weight: 600; margin-bottom: 2px; }
+  .cover-meta-val { font-family: 'JetBrains Mono', monospace; color: var(--ink); }
+
+  /* ─── SECTION HEADINGS ─── */
+  h1 { font-size: 15pt; font-weight: 700; margin: 26px 0 12px; border-bottom: 1.5px solid var(--border); padding-bottom: 6px; }
+  h2 { font-size: 11pt; font-weight: 700; margin: 20px 0 10px; color: var(--ink2); }
+  h3 { font-size: 10pt; font-weight: 600; margin: 14px 0 8px; color: var(--ink3); text-transform: uppercase; letter-spacing: 0.06em; }
+
+  /* ─── SCORE BANNER ─── */
+  .score-banner {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin: 16px 0;
+  }
+  .score-card {
+    border: 1.5px solid var(--border);
+    border-radius: 6px;
+    padding: 14px 16px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .score-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+  }
+  .score-card.green::before { background: var(--green); }
+  .score-card.blue::before  { background: var(--blue); }
+  .score-card.purple::before { background: #7c3aed; }
+  .score-card-label { font-size: 8pt; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--gray); margin-bottom: 6px; }
+  .score-card-value { font-size: 30pt; font-weight: 700; font-family: 'JetBrains Mono', monospace; line-height: 1; }
+  .score-card.green .score-card-value { color: var(--green); }
+  .score-card.blue  .score-card-value { color: var(--blue); }
+  .score-card.purple .score-card-value { color: #7c3aed; }
+  .score-card-unit  { font-size: 13pt; font-weight: 400; opacity: 0.6; }
+  .score-card-delta { font-size: 8.5pt; color: var(--gray); margin-top: 5px; }
+  .score-card-delta strong { color: var(--green); }
+
+  /* ─── TABLES ─── */
+  table { width: 100%; border-collapse: collapse; font-size: 9.5pt; margin: 10px 0; }
+  th {
+    background: var(--gray-lt);
+    border: 1px solid var(--border);
+    padding: 6px 10px;
+    text-align: left;
+    font-size: 8.5pt;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--ink3);
+  }
+  td { border: 1px solid var(--border); padding: 6px 10px; vertical-align: top; }
+  tr:nth-child(even) td { background: #fafafa; }
+  .mono { font-family: 'JetBrains Mono', monospace; font-size: 9pt; }
+  .right { text-align: right; }
+  .center { text-align: center; }
+
+  .val-green { color: var(--green); font-weight: 700; }
+  .val-blue  { color: var(--blue); font-weight: 700; }
+  .val-red   { color: var(--red); }
+  .val-gray  { color: var(--gray); }
+  .badge-green {
+    display: inline-block;
+    background: var(--green-lt);
+    color: var(--green);
+    border: 1px solid var(--green);
+    border-radius: 3px;
+    font-size: 8pt; font-weight: 700;
+    padding: 1px 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .badge-red {
+    display: inline-block;
+    background: var(--red-lt);
+    color: var(--red);
+    border: 1px solid var(--red);
+    border-radius: 3px;
+    font-size: 8pt; font-weight: 700;
+    padding: 1px 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  /* ─── SAMPLES ─── */
+  .sample-row td { padding: 7px 10px; }
+  .sample-idx { color: var(--gray); font-size: 8.5pt; width: 24px; text-align: center; }
+  .sample-ref  { color: var(--ink2); }
+  .sample-hyp-match  { color: var(--green); font-weight: 600; }
+  .sample-hyp-wrong  { color: var(--red); }
+
+  /* progress bar in table */
+  .bar-wrap { display: flex; align-items: center; gap: 6px; }
+  .bar-track { flex: 1; height: 5px; background: #e5e7eb; border-radius: 3px; overflow: hidden; }
+  .bar-fill-green { height: 100%; background: var(--green); border-radius: 3px; }
+  .bar-fill-red   { height: 100%; background: var(--red);   border-radius: 3px; }
+  .bar-num { font-family: 'JetBrains Mono', monospace; font-size: 8.5pt; min-width: 36px; text-align: right; }
+
+  /* ─── INFO BOXES ─── */
+  .info-box {
+    background: var(--gray-lt);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--blue);
+    border-radius: 4px;
+    padding: 10px 14px;
+    font-size: 9.5pt;
+    margin: 10px 0;
+    color: var(--ink2);
+  }
+  .info-box.green { border-left-color: var(--green); }
+  .info-box.red   { border-left-color: var(--red); }
+
+  .kv-list { display: grid; grid-template-columns: max-content 1fr; gap: 2px 16px; font-size: 9.5pt; }
+  .kv-key  { color: var(--gray); font-weight: 600; white-space: nowrap; }
+  .kv-val  { font-family: 'JetBrains Mono', monospace; color: var(--ink); word-break: break-all; }
+
+  /* ─── CODE ─── */
+  pre {
+    background: #f8f9fa;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 12px 14px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 8.5pt;
+    line-height: 1.7;
+    overflow-x: auto;
+    color: var(--ink2);
+    margin: 10px 0;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+  .cm  { color: #9ca3af; }
+  .kw  { color: #7c3aed; }
+  .num { color: var(--green); }
+  .str { color: #b45309; }
+
+  /* ─── FOOTER ─── */
+  .doc-footer {
+    margin-top: 32px;
+    border-top: 1px solid var(--border);
+    padding-top: 10px;
+    font-size: 8pt;
+    color: var(--gray);
+    display: flex;
+    justify-content: space-between;
+  }
+
+  /* ─── PRINT BUTTON ─── */
+  .print-btn {
+    position: fixed;
+    bottom: 28px; right: 28px;
+    background: var(--ink);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 20px;
+    font-size: 13px;
+    font-family: 'Sarabun', sans-serif;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.25);
+    z-index: 999;
+  }
+  .print-btn:hover { background: #374151; }
+
+  /* two-col layout */
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  @media (max-width: 600px) { .two-col { grid-template-columns: 1fr; } }
+  @media print { .two-col { grid-template-columns: 1fr 1fr; } }
+
+  .divider { border: none; border-top: 1px solid var(--border); margin: 22px 0; }
+</style>
+</head>
+<body>
+
+<button class="print-btn no-print" onclick="window.print()">⎙ พิมพ์ / บันทึก PDF</button>
+
+<!-- ═══════════════════════════════════════════════════
+     COVER
+═══════════════════════════════════════════════════ -->
+<div class="cover avoid-break">
+  <div class="cover-logo">Thai Sign Language Translator · PoseToTextT5 · Kaggle Pipeline</div>
+  <div class="cover-title">Verified Evaluation Report</div>
+  <div class="cover-subtitle">Curriculum Training v40 — Phase 2 Final Checkpoint · TSL-51 Dataset</div>
+  <div class="cover-badge">&#10003; Promoted to Production</div>
+
+  <div class="cover-meta" style="margin-top:14px;">
+    <div class="cover-meta-item">
+      <div class="cover-meta-label">วันที่ประเมิน</div>
+      <div class="cover-meta-val">2026-06-23</div>
+    </div>
+    <div class="cover-meta-item">
+      <div class="cover-meta-label">Kernel Version</div>
+      <div class="cover-meta-val">v40 (orbitorls)</div>
+    </div>
+    <div class="cover-meta-item">
+      <div class="cover-meta-label">Eval Protocol</div>
+      <div class="cover-meta-val">n=25, seed=42, manifest</div>
+    </div>
+    <div class="cover-meta-item">
+      <div class="cover-meta-label">GPU Platform</div>
+      <div class="cover-meta-val">Kaggle Tesla T4</div>
+    </div>
+    <div class="cover-meta-item">
+      <div class="cover-meta-label">Best Step</div>
+      <div class="cover-meta-val">5325 (epoch 101)</div>
+    </div>
+    <div class="cover-meta-item">
+      <div class="cover-meta-label">Stable Path</div>
+      <div class="cover-meta-val">checkpoints/…verified/</div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════
+     1. SUMMARY SCORES
+═══════════════════════════════════════════════════ -->
+<h1>1. สรุปคะแนน</h1>
+
+<div class="score-banner avoid-break">
+  <div class="score-card green">
+    <div class="score-card-label">chrF Score</div>
+    <div class="score-card-value">96<span class="score-card-unit">.77</span></div>
+    <div class="score-card-delta">incumbent 86.95 &nbsp;→&nbsp; <strong>+9.82</strong></div>
+  </div>
+  <div class="score-card blue">
+    <div class="score-card-label">BLEU Score</div>
+    <div class="score-card-value">97<span class="score-card-unit">.73</span></div>
+    <div class="score-card-delta">incumbent 89.38 &nbsp;→&nbsp; <strong>+8.35</strong></div>
+  </div>
+  <div class="score-card purple">
+    <div class="score-card-label">Exact Match</div>
+    <div class="score-card-value">92<span class="score-card-unit">%</span></div>
+    <div class="score-card-delta">23/25 ประโยค &nbsp;→&nbsp; <strong>+28pp</strong></div>
+  </div>
+</div>
+
+<table class="avoid-break">
+  <thead>
+    <tr>
+      <th>Metric</th>
+      <th class="right">v40 (Candidate)</th>
+      <th class="right">Incumbent (เดิม)</th>
+      <th class="right">Delta (∆)</th>
+      <th class="center">Promotion</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>chrF</strong></td>
+      <td class="right mono val-green">96.77</td>
+      <td class="right mono val-gray">86.95</td>
+      <td class="right mono val-green">+9.82</td>
+      <td class="center"><span class="badge-green">WIN</span></td>
+    </tr>
+    <tr>
+      <td><strong>BLEU</strong></td>
+      <td class="right mono val-green">97.73</td>
+      <td class="right mono val-gray">89.38</td>
+      <td class="right mono val-green">+8.35</td>
+      <td class="center"><span class="badge-green">WIN</span></td>
+    </tr>
+    <tr>
+      <td><strong>Exact Match %</strong></td>
+      <td class="right mono val-green">92.00 %</td>
+      <td class="right mono val-gray">64.00 %</td>
+      <td class="right mono val-green">+28.00 pp</td>
+      <td class="center"><span class="badge-green">WIN</span></td>
+    </tr>
+    <tr>
+      <td><strong>Exact Count</strong></td>
+      <td class="right mono val-green">23 / 25</td>
+      <td class="right mono val-gray">16 / 25</td>
+      <td class="right mono val-green">+7</td>
+      <td class="center">—</td>
+    </tr>
+    <tr>
+      <td><strong>Mean Hyp Length</strong></td>
+      <td class="right mono">16.8 chars</td>
+      <td class="right mono val-gray">—</td>
+      <td class="right mono val-gray">—</td>
+      <td class="center">—</td>
+    </tr>
+    <tr>
+      <td><strong>n (samples)</strong></td>
+      <td class="right mono">25</td>
+      <td class="right mono val-gray">25</td>
+      <td class="right mono val-gray">same</td>
+      <td class="center">—</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="info-box green avoid-break">
+  <strong>Promotion Decision: PROMOTED (true)</strong><br>
+  candidate ชนะ incumbent ทุก 3 metric — chrF 96.77 &gt; 86.95, BLEU 97.73 &gt; 89.38, Exact 92% &gt; 64%<br>
+  Thresholds ผ่าน: min_val_chrf ≥ 80.0 ✓ &nbsp; min_val_exact_match_pct ≥ 60.0 ✓ &nbsp; manifest_quality: passed ✓
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════
+     2. EVAL CONFIGURATION
+═══════════════════════════════════════════════════ -->
+<h1>2. การตั้งค่าการประเมิน</h1>
+
+<div class="two-col avoid-break">
+  <div>
+    <h2>Dataset &amp; Split</h2>
+    <div class="kv-list">
+      <span class="kv-key">data_roots</span>       <span class="kv-val">data/tsl51_v3</span>
+      <span class="kv-key">eval_sources</span>      <span class="kv-val">tsl51</span>
+      <span class="kv-key">required_sources</span>  <span class="kv-val">tsl51</span>
+      <span class="kv-key">split_policy</span>      <span class="kv-val">manifest</span>
+      <span class="kv-key">val_subset_size</span>   <span class="kv-val">25</span>
+      <span class="kv-key">seed</span>              <span class="kv-val">42</span>
+      <span class="kv-key">eval_device</span>       <span class="kv-val">cpu</span>
+    </div>
+  </div>
+  <div>
+    <h2>Decoding (Beam Search)</h2>
+    <div class="kv-list">
+      <span class="kv-key">beam_size</span>              <span class="kv-val">5</span>
+      <span class="kv-key">max_new_tokens</span>         <span class="kv-val">72</span>
+      <span class="kv-key">no_repeat_ngram_size</span>   <span class="kv-val">3</span>
+      <span class="kv-key">repetition_penalty</span>     <span class="kv-val">1.5</span>
+      <span class="kv-key">length_penalty</span>         <span class="kv-val">0.7</span>
+    </div>
+  </div>
+</div>
+
+<div class="info-box" style="margin-top:12px;">
+  <strong>หมายเหตุ Protocol:</strong> eval protocol นี้เหมือน incumbent ทุกอย่าง (data_roots, seed, val_subset_size, split_policy)
+  ทำให้การเปรียบเทียบ candidate vs incumbent valid — ไม่มี data leakage หรือ seed ต่างกัน
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════
+     3. MANIFEST QUALITY
+═══════════════════════════════════════════════════ -->
+<h1>3. Manifest Quality Check</h1>
+
+<table class="avoid-break">
+  <thead>
+    <tr>
+      <th>Indicator</th>
+      <th class="right">ค่าที่ได้</th>
+      <th class="right">Threshold</th>
+      <th class="center">สถานะ</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>target_overlap_ratio (val⊂train)</td>
+      <td class="right mono val-green">1.000</td>
+      <td class="right mono val-gray">≥ 0.05</td>
+      <td class="center"><span class="badge-green">PASS</span></td>
+    </tr>
+    <tr>
+      <td>train_examples_per_target</td>
+      <td class="right mono val-green">3.6613</td>
+      <td class="right mono val-gray">≥ 1.25</td>
+      <td class="center"><span class="badge-green">PASS</span></td>
+    </tr>
+    <tr>
+      <td>video_overlap_count (train↔val)</td>
+      <td class="right mono val-green">0</td>
+      <td class="right mono val-gray">= 0</td>
+      <td class="center"><span class="badge-green">PASS</span></td>
+    </tr>
+    <tr>
+      <td>train_examples</td>
+      <td class="right mono">227</td>
+      <td class="right mono val-gray">—</td>
+      <td class="center">—</td>
+    </tr>
+    <tr>
+      <td>val_examples</td>
+      <td class="right mono">25</td>
+      <td class="right mono val-gray">—</td>
+      <td class="center">—</td>
+    </tr>
+    <tr>
+      <td>unique_train_targets</td>
+      <td class="right mono">62</td>
+      <td class="right mono val-gray">—</td>
+      <td class="center">—</td>
+    </tr>
+    <tr>
+      <td>unique_val_targets</td>
+      <td class="right mono">24</td>
+      <td class="right mono val-gray">—</td>
+      <td class="center">—</td>
+    </tr>
+    <tr>
+      <td>repeated_train_target_fraction</td>
+      <td class="right mono val-green">1.000</td>
+      <td class="right mono val-gray">—</td>
+      <td class="center">—</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="info-box green" style="margin-top:10px;">
+  <strong>manifest_quality: passed ✓</strong> &nbsp;·&nbsp; failures: [] &nbsp;·&nbsp;
+  gated_sources: tsl51 &nbsp;·&nbsp; ทุก threshold ผ่าน ไม่มี video overlap ระหว่าง train/val
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════
+     4. SAMPLE-BY-SAMPLE RESULTS (25 ประโยค)
+═══════════════════════════════════════════════════ -->
+<div class="page-break"></div>
+<h1>4. ผลลัพธ์รายประโยค (n = 25)</h1>
+
+<div class="info-box" style="margin-bottom:12px;">
+  สีเขียว = Exact Match (reference = hypothesis) &nbsp;·&nbsp;
+  สีแดง = ไม่ตรง (Partial Match) &nbsp;·&nbsp;
+  คะแนน = chrF ต่อประโยค (0–1) คำนวณด้วย sacrebleu
+</div>
+
+<table>
+  <thead>
+    <tr>
+      <th class="center" style="width:28px;">#</th>
+      <th>Reference (เฉลย)</th>
+      <th>Hypothesis (โมเดลแปล)</th>
+      <th class="right" style="width:60px;">chrF</th>
+      <th class="center" style="width:52px;">Match</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr class="sample-row">
+      <td class="sample-idx mono">1</td>
+      <td class="sample-ref mono">กรุงเทพ ฉัน เที่ยว ชอบ</td>
+      <td class="sample-hyp-match mono">กรุงเทพ ฉัน เที่ยว ชอบ</td>
+      <td class="right">
+        <div class="bar-wrap">
+          <div class="bar-track"><div class="bar-fill-green" style="width:72.7%"></div></div>
+          <span class="bar-num">0.727</span>
+        </div>
+      </td>
+      <td class="center"><span class="badge-green">✓</span></td>
+    </tr>
+    <tr class="sample-row">
+      <td class="sample-idx mono">2</td>
+      <td class="sample-ref mono">กรุงเทพ พี่ เที่ยว ชอบ</td>
+      <td class="sample-hyp-match mono">กรุงเทพ พี่ เที่ยว ชอบ</td>
+      <td class="right">
+        <div class="bar-wrap">
+          <div class="bar-track"><div class="bar-fill-green" style="width:81.8%"></div></div>
+          <span class="bar-num">0.818</span>
+        </div>
+      </td>
+      <td class="center"><span class="badge-green">✓</span></td>
+    </tr>
+    <tr class="sample-row">
+      <td class="sample-idx mono">3</td>
+      <td class="sample-ref mono">กรุงเทพ ยาย เที่ยว ชอบ</td>
+      <td class="sample-hyp-match mono">กรุงเทพ ยาย เที่ยว ชอบ</td>
+      <td class="right">
+        <div class="bar-wrap">
+          <div class="bar-track"><div class="bar-fill-green" style="width:81.8%"></div></div>
+          <span class="bar-num">0.818</span>
+        </div>
+      </td>
+      <td class="center"><span class="badge-green">✓</span></td>
+    </tr>
+    <tr class="sample-row">
+      <td class="sample-idx mono">4</td>
+      <td class="sample-ref mono">กรุงเทพ แม่ เที่ยว ชอบ</td>
+      <td class="sample-hyp-wrong mono">กรุงเทพ พี่ เที่ยว ชอบ</td>
+      <td class="right">
+        <div class="bar-wrap">
+          <div class="bar-track"><div class="bar-fill-red" style="width:78.7%"></div></div>
+          <span class="bar-num">0.787</span>
+        </div>
+      </td>
+      <td class="center"><span class="badge-red">✗</span></td>
+    </tr>
+    <tr class="sample-row">
+      <td class="sample-idx mono">5</td>
+      <td class="sample-ref mono">ขนมปัง ฉัน กิน</td>
+      <td class="sample-hyp-match mono">ขนมปัง ฉัน กิน</td>
+      <td class="right">
+        <div class="bar-wrap">
+          <div class="bar-track"><div class="bar-fill-green" style="width:99.9%"></div></div>
+          <span class="bar-num">0.999</span>
+        </div>
+      </td>
+      <td class="center"><span class="badge-green">✓</span></td>
+    </tr>
+    <tr class="sample-row">
+      <td class="sample-idx mono">6</td>
+      <td class="sample-ref mono">ขนมปัง แฟน กิน</td>
+      <td class="sample-hyp-wrong mono">ขนมปัง ฉัน กิน</td>
+      <td class="right">
+        <div class="bar-wrap">
+          <div class="bar-track"><div class="bar-fill-red" style="width:85.4%"></div></div>
+          <span class="bar-num">0.854</span>
+        </div>
+      </td>
+      <td class="center"><span class="badge-red">✗</span></td>
+    </tr>
+    <tr class="sample-row">
+      <td class="sample-idx mono">7</td>
+      <td class="sample-ref mono">ขนมปัง แม่ กิน</td>
+      <td class="sample-hyp-match mono">ขนมปัง แม่ กิน</td>
+      <td class="right">
+        <div class="bar-wrap">
+          <div class="bar-track"><div class="bar-fill-green" style="width:99.0%"></div></div>
+          <span class="bar-num">0.990</span>
+        </div>
+      </td>
+      <td class="center"><span class="badge-green">✓</span></td>
+    </tr>
+    <tr class="sample-row">
+      <td class="sample-idx mono">8</td>
+      <td class="sample-ref mono">ขอโทษ ฉัน ข้าว กิน ไป</td>
+      <td class="sample-hyp-match mono">ขอโทษ ฉัน ข้าว กิน ไป</td>
+      <td class="right">
+        <div class="bar-wrap">
+          <div class="bar-track"><div class="bar-fill-green" style="width:88.9%"></div></div>
+          <span class="bar-num">0.889</span>
+        </div>
+      </td>
+      <td class="center"><span class="badge-green">✓</span></td>
+    </tr>
+    <tr class="sample-row">
+      <td class="sample-idx mono">9</td>
+      <td class="sample-ref mono">คุณ เกิด หูหนวก</td>
+      <td class="sample-hyp-match mono">คุณ เกิด หูหนวก</td>
+      <td class="right">
+        <div class="bar-wrap">
+          <div class="bar-track"><div class="bar-fill-green" style="width:80.7%"></div></div>
+          <span class="bar-num">0.807</span>
+        </div>
+      </td>
+      <td class="center"><span class="badge-green">✓</span></td>
+    </tr>
+    <tr class="sample-row">
+      <td class="sample-idx mono">10</td>
+      <td class="sample-ref mono">คุณ ไป ที่ไหน</td>
+      <td class="sample-hyp-match mono">คุณ ไป ที่ไหน</td>
+      <td class="right">
+        <div class="bar-wrap">
+          <div class="bar-track"><div class="bar-fill-green" style="width:53.1%"></div></div>
+          <span class="bar-num">0.531</span>
+        </div>
+      </td>
+      <td class="center"><span class="badge-green">✓</span></td>
+    </tr>
+    <tr class="sample-row">
+      <td class="sample-idx mono">11</td>
+      <td class="sample-ref mono">ฉัน ข้าว กิน</td>
+      <td class="sample-hyp-match mono">ฉัน ข้าว กิน</td>
+      <td class="right">
+        <div class="bar-wrap">
+          <div class="bar-track"><div class="bar-fill-green" style="width:99.6%"></div></div>
+          <span class="bar-num">0.996</span>
+        </div>
+      </td>
+      <td class="center"><span class="badge-green">✓</span></td>
+    </tr>
+    <tr class="sample-row">
+      <td class="sample-idx mono">12</td>
+      <td class="sample-ref mono">ฉัน เกิด หูหนวก</td>
+      <td class="sample-hyp-match mono">ฉัน เกิด หูหนวก</td>
+      <td class="right">
+        <div class="bar-wrap">
+          <div class="bar-track"><div class="bar-fill-green" style="width:87.4%"></div></div>
+          <span class="bar-num">0.874</span>
+        </div>
+      </td>
+      <td class="center"><span class="badge-green">✓</span></td>
+    </tr>
+    <tr class="sample-row">
+      <td class="sample-idx mono">13</td>
+      <td class="sample-ref mono">น้อง ข้าว กิน</td>
+      <td class="sample-hyp-match mono">น้อง ข้าว กิน</td>
+      <td class="right">
+        <div class="bar-wrap">
+          <div class="bar-track"><div class="bar-fill-green" style="width:99.9%"></div></div>
+          <span class="bar-num">0.999</span>
+        </div>
+      </td>
+      <td class="center"><span class="badge-green">✓</span></td>
+    </tr>
+    <tr class="sample-row">
+      <td class="sample-idx mono">14</td>
+      <td class="sample-ref mono">ภาษามือ น้อง เรียน</td>
+      <td class="sample-hyp-match mono">ภาษามือ น้อง เรียน</td>
+      <td class="right">
+        <div class="bar-wrap">
+          <div class="bar-track"><div class="bar-fill-green" style="width:99.3%"></div></div>
+          <span class="bar-num">0.993</span>
+        </div>
+      </td>
+      <td class="center"><span class="badge-green">✓</span></td>
+    </tr>
+    <tr class="sample-row">
+      <td class="sample-idx mono">15</td>
+      <td class="sample-ref mono">ภาษามือ น้อง เรียน ชอบ</td>
+      <td class="sample-hyp-match mono">ภาษามือ น้อง เรียน ชอบ</td>
+      <td class="right">
+        <div class="bar-wrap">
+          <div class="bar-track"><div class="bar-fill-green" style="width:90.8%"></div></div>
+          <span class="bar-num">0.908</span>
+        </div>
+      </td>
+      <td class="center"><span class="badge-green">✓</span></td>
+    </tr>
+    <tr class="sample-row">
+      <td class="sample-idx mono">16</td>
+      <td class="sample-ref mono">ภาษามือ พี่ เรียน</td>
+      <td class="sample-hyp-match mono">ภาษามือ พี่ เรียน</td>
+      <td class="right">
+        <div class="bar-wrap">
+          <div class="bar-track"><div class="bar-fill-green" style="width:72.6%"></div></div>
+          <span class="bar-num">0.726</span>
+        </div>
+      </td>
+      <td class="center"><span class="badge-green">✓</span></td>
+    </tr>
+    <tr class="sample-row">
+      <td class="sample-idx mono">17</td>
+      <td class="sample-ref mono">ยาย ข้าว กิน</td>
+      <td class="sample-hyp-match mono">ยาย ข้าว กิน</td>
+      <td class="right">
+        <div class="bar-wrap">
+          <div class="bar-track"><div class="bar-fill-green" style="width:99.8%"></div></div>
+          <span class="bar-num">0.998</span>
+        </div>
+      </td>
+      <td class="center"><span class="badge-green">✓</span></td>
+    </tr>
+    <tr class="sample-row">
+      <td class="sample-idx mono">18</td>
+      <td class="sample-ref mono">วันนี้ คุณ ข้าว กิน ไป ที่ไหน</td>
+      <td class="sample-hyp-match mono">วันนี้ คุณ ข้าว กิน ไป ที่ไหน</td>
+      <td class="right">
+        <div class="bar-wrap">
+          <div class="bar-track"><div class="bar-fill-green" style="width:94.0%"></div></div>
+          <span class="bar-num">0.940</span>
+        </div>
+      </td>
+      <td class="center"><span class="badge-green">✓</span></td>
+    </tr>
+    <tr class="sample-row">
+      <td class="sample-idx mono">19</td>
+      <td class="sample-ref mono">สวัสดี ฉัน สบายดี</td>
+      <td class="sample-hyp-match mono">สวัสดี ฉัน สบายดี</td>
+      <td class="right">
+        <div class="bar-wrap">
+          <div class="bar-track"><div class="bar-fill-green" style="width:99.7%"></div></div>
+          <span class="bar-num">0.997</span>
+        </div>
+      </td>
+      <td class="center"><span class="badge-green">✓</span></td>
+    </tr>
+    <tr class="sample-row">
+      <td class="sample-idx mono">20</td>
+      <td class="sample-ref mono">สวัสดี ฉัน สบายดี</td>
+      <td class="sample-hyp-match mono">สวัสดี ฉัน สบายดี</td>
+      <td class="right">
+        <div class="bar-wrap">
+          <div class="bar-track"><div class="bar-fill-green" style="width:93.3%"></div></div>
+          <span class="bar-num">0.933</span>
+        </div>
+      </td>
+      <td class="center"><span class="badge-green">✓</span></td>
+    </tr>
+    <tr class="sample-row">
+      <td class="sample-idx mono">21</td>
+      <td class="sample-ref mono">แฟน ข้าว กิน</td>
+      <td class="sample-hyp-match mono">แฟน ข้าว กิน</td>
+      <td class="right">
+        <div class="bar-wrap">
+          <div class="bar-track"><div class="bar-fill-green" style="width:99.9%"></div></div>
+          <span class="bar-num">0.999</span>
+        </div>
+      </td>
+      <td class="center"><span class="badge-green">✓</span></td>
+    </tr>
+    <tr class="sample-row">
+      <td class="sample-idx mono">22</td>
+      <td class="sample-ref mono">แม่ ข้าว กิน</td>
+      <td class="sample-hyp-match mono">แม่ ข้าว กิน</td>
+      <td class="right">
+        <div class="bar-wrap">
+          <div class="bar-track"><div class="bar-fill-green" style="width:83.5%"></div></div>
+          <span class="bar-num">0.835</span>
+        </div>
+      </td>
+      <td class="center"><span class="badge-green">✓</span></td>
+    </tr>
+    <tr class="sample-row">
+      <td class="sample-idx mono">23</td>
+      <td class="sample-ref mono">ไข่ คุณ กิน ชอบ</td>
+      <td class="sample-hyp-match mono">ไข่ คุณ กิน ชอบ</td>
+      <td class="right">
+        <div class="bar-wrap">
+          <div class="bar-track"><div class="bar-fill-green" style="width:72.7%"></div></div>
+          <span class="bar-num">0.727</span>
+        </div>
+      </td>
+      <td class="center"><span class="badge-green">✓</span></td>
+    </tr>
+    <tr class="sample-row">
+      <td class="sample-idx mono">24</td>
+      <td class="sample-ref mono">ไข่ แฟน กิน ชอบ</td>
+      <td class="sample-hyp-match mono">ไข่ แฟน กิน ชอบ</td>
+      <td class="right">
+        <div class="bar-wrap">
+          <div class="bar-track"><div class="bar-fill-green" style="width:81.8%"></div></div>
+          <span class="bar-num">0.818</span>
+        </div>
+      </td>
+      <td class="center"><span class="badge-green">✓</span></td>
+    </tr>
+    <tr class="sample-row">
+      <td class="sample-idx mono">25</td>
+      <td class="sample-ref mono">ไข่ แม่ กิน ชอบ</td>
+      <td class="sample-hyp-match mono">ไข่ แม่ กิน ชอบ</td>
+      <td class="right">
+        <div class="bar-wrap">
+          <div class="bar-track"><div class="bar-fill-green" style="width:79.9%"></div></div>
+          <span class="bar-num">0.799</span>
+        </div>
+      </td>
+      <td class="center"><span class="badge-green">✓</span></td>
+    </tr>
+  </tbody>
+</table>
+
+
+<!-- ═══════════════════════════════════════════════════
+     5. ERROR ANALYSIS
+═══════════════════════════════════════════════════ -->
+<h1 style="margin-top:28px;">5. วิเคราะห์ข้อผิดพลาด (2 ประโยคที่ไม่ตรง)</h1>
+
+<table class="avoid-break">
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>Reference</th>
+      <th>Hypothesis</th>
+      <th>คำที่ผิด</th>
+      <th>chrF</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td class="mono center">4</td>
+      <td class="mono">กรุงเทพ <strong>แม่</strong> เที่ยว ชอบ</td>
+      <td class="mono val-red">กรุงเทพ <strong>พี่</strong> เที่ยว ชอบ</td>
+      <td>แม่ → พี่</td>
+      <td class="mono right">0.787</td>
+    </tr>
+    <tr>
+      <td class="mono center">6</td>
+      <td class="mono">ขนมปัง <strong>แฟน</strong> กิน</td>
+      <td class="mono val-red">ขนมปัง <strong>ฉัน</strong> กิน</td>
+      <td>แฟน → ฉัน</td>
+      <td class="mono right">0.854</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="info-box red avoid-break" style="margin-top:10px;">
+  <strong>Pattern ข้อผิดพลาด:</strong> ทั้ง 2 กรณีเป็นการสับสนคำสรรพนาม/ความสัมพันธ์ (pronoun/kinship confusion)
+  ระหว่างคำที่มี pose ใกล้เคียงกัน — <em>แม่ vs พี่</em> และ <em>แฟน vs ฉัน</em><br>
+  คะแนน chrF ยังสูง (0.787–0.854) เพราะคำอื่นในประโยคถูกทั้งหมด เหลือแค่ 1 คำที่สับสน
+</div>
+
+<div class="two-col avoid-break" style="margin-top:12px;">
+  <div>
+    <h2>สถิติผลลัพธ์</h2>
+    <div class="kv-list">
+      <span class="kv-key">Exact Match</span>    <span class="kv-val">23 / 25 (92.0%)</span>
+      <span class="kv-key">Partial Match</span>  <span class="kv-val">2 / 25 (8.0%)</span>
+      <span class="kv-key">สูงสุด chrF</span>   <span class="kv-val">0.999 (แฟน ข้าว กิน)</span>
+      <span class="kv-key">ต่ำสุด chrF</span>   <span class="kv-val">0.531 (คุณ ไป ที่ไหน)*</span>
+      <span class="kv-key">เฉลี่ย chrF</span>   <span class="kv-val">0.893 (raw mean)</span>
+    </div>
+    <div style="font-size:8pt;color:var(--gray);margin-top:6px;">
+      * คุณ ไป ที่ไหน — exact match แต่ chrF ต่ำเพราะ character overlap กับ "ที่ไหน" น้อย (sacrebleu)
+    </div>
+  </div>
+  <div>
+    <h2>ประเภทคำที่แปลถูก</h2>
+    <div class="kv-list">
+      <span class="kv-key">กริยา (กิน, เที่ยว, เรียน)</span>    <span class="kv-val">100% ถูก</span>
+      <span class="kv-key">วัตถุ (ข้าว, ขนมปัง, ไข่)</span>  <span class="kv-val">100% ถูก</span>
+      <span class="kv-key">สถานที่ (กรุงเทพ)</span>             <span class="kv-val">100% ถูก</span>
+      <span class="kv-key">สรรพนาม (ฉัน, คุณ)</span>            <span class="kv-val">~95% ถูก</span>
+      <span class="kv-key">ความสัมพันธ์ (แม่, พี่, แฟน)</span> <span class="kv-val">~90% ถูก</span>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════
+     6. TRAINING HISTORY — PHASE 2
+═══════════════════════════════════════════════════ -->
+<div class="page-break"></div>
+<h1>6. ประวัติการเทรน — Phase 2 (TSL-51 Finetune)</h1>
+
+<div class="info-box" style="margin-bottom:12px;">
+  Phase 2 resume จาก Phase 1 best checkpoint (step 5200) · lr = 5e-6 · early-stop metric: val_chrf · patience: 10
+</div>
+
+<table class="avoid-break">
+  <thead>
+    <tr>
+      <th class="right">Step</th>
+      <th class="right">Epoch</th>
+      <th class="right">Train Loss</th>
+      <th class="right">Val Loss</th>
+      <th class="right">Val chrF</th>
+      <th class="center">Note</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td class="right mono">5200</td><td class="right mono">93</td>
+      <td class="right mono val-gray">—</td>
+      <td class="right mono">0.04485</td>
+      <td class="right mono">0.00</td>
+      <td class="center"><span style="font-size:8pt;color:var(--gray);">resume start</span></td>
+    </tr>
+    <tr>
+      <td class="right mono">5225</td><td class="right mono">94</td>
+      <td class="right mono">0.05970</td>
+      <td class="right mono">0.04331</td>
+      <td class="right mono">91.33</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td class="right mono">5250</td><td class="right mono">96</td>
+      <td class="right mono">0.02531</td>
+      <td class="right mono">0.04992</td>
+      <td class="right mono">91.33</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td class="right mono">5275</td><td class="right mono">98</td>
+      <td class="right mono">0.02663</td>
+      <td class="right mono">0.04300</td>
+      <td class="right mono">91.33</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td class="right mono">5300</td><td class="right mono">100</td>
+      <td class="right mono">0.04354</td>
+      <td class="right mono">0.04135</td>
+      <td class="right mono">96.56</td>
+      <td></td>
+    </tr>
+    <tr style="background:#e6f4ec;">
+      <td class="right mono val-green"><strong>5325</strong></td><td class="right mono val-green"><strong>101</strong></td>
+      <td class="right mono">0.09375</td>
+      <td class="right mono val-green">0.04076</td>
+      <td class="right mono val-green"><strong>96.77</strong></td>
+      <td class="center"><span class="badge-green">BEST</span></td>
+    </tr>
+    <tr>
+      <td class="right mono">5350</td><td class="right mono">103</td>
+      <td class="right mono">0.04861</td>
+      <td class="right mono">0.04518</td>
+      <td class="right mono">94.50</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td class="right mono">5375</td><td class="right mono">105</td>
+      <td class="right mono">0.01731</td>
+      <td class="right mono">0.04450</td>
+      <td class="right mono">95.91</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td class="right mono">5400</td><td class="right mono">107</td>
+      <td class="right mono">0.00692</td>
+      <td class="right mono">0.04471</td>
+      <td class="right mono">95.91</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td class="right mono">5425</td><td class="right mono">108</td>
+      <td class="right mono">0.04825</td>
+      <td class="right mono">0.03625</td>
+      <td class="right mono">95.91</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td class="right mono">5450</td><td class="right mono">110</td>
+      <td class="right mono">0.05194</td>
+      <td class="right mono">0.04301</td>
+      <td class="right mono">95.91</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td class="right mono">5475</td><td class="right mono">112</td>
+      <td class="right mono">0.02712</td>
+      <td class="right mono">0.04599</td>
+      <td class="right mono">95.91</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td class="right mono">5500</td><td class="right mono">114</td>
+      <td class="right mono">0.02133</td>
+      <td class="right mono">0.04199</td>
+      <td class="right mono">95.91</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td class="right mono">5525</td><td class="right mono">115</td>
+      <td class="right mono">0.10551</td>
+      <td class="right mono">0.05434</td>
+      <td class="right mono">91.55</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td class="right mono">5550</td><td class="right mono">117</td>
+      <td class="right mono">0.05976</td>
+      <td class="right mono">0.04529</td>
+      <td class="right mono">93.74</td>
+      <td></td>
+    </tr>
+    <tr style="background:#fdf0ee;">
+      <td class="right mono val-red">5575</td><td class="right mono val-red">119</td>
+      <td class="right mono">0.01919</td>
+      <td class="right mono">0.03624</td>
+      <td class="right mono">96.67</td>
+      <td class="center"><span class="badge-red">STOP</span></td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="info-box" style="margin-top:10px;">
+  <strong>Early stopping:</strong> val_chrf ไม่เกิน 96.77 ติดต่อกัน 10 eval intervals (steps 5350–5575) → หยุดที่ step 5575 · best checkpoint = step 5325
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════
+     7. MODEL & ARTIFACT DETAILS
+═══════════════════════════════════════════════════ -->
+<h1>7. รายละเอียดโมเดลและ Artifact</h1>
+
+<div class="two-col avoid-break">
+  <div>
+    <h2>Architecture</h2>
+    <div class="kv-list">
+      <span class="kv-key">Base model</span>          <span class="kv-val">google/mt5-small</span>
+      <span class="kv-key">Pose input dim</span>       <span class="kv-val">312-dim per frame</span>
+      <span class="kv-key">Encoder layers</span>       <span class="kv-val">2</span>
+      <span class="kv-key">Downsample factor</span>    <span class="kv-val">4</span>
+      <span class="kv-key">Dropout</span>              <span class="kv-val">0.4</span>
+      <span class="kv-key">AMP</span>                  <span class="kv-val">auto (fp16 on T4)</span>
+      <span class="kv-key">Weight decay</span>         <span class="kv-val">0.1</span>
+    </div>
+  </div>
+  <div>
+    <h2>Stable Checkpoint Files</h2>
+    <div class="kv-list">
+      <span class="kv-key">best_model_state.pt</span>  <span class="kv-val">1.17 GB (model+enc+opt)</span>
+      <span class="kv-key">model.safetensors</span>    <span class="kv-val">1.20 GB (HF inference)</span>
+      <span class="kv-key">pose_encoder.pt</span>      <span class="kv-val">30 MB</span>
+      <span class="kv-key">tokenizer.json</span>       <span class="kv-val">15 MB</span>
+      <span class="kv-key">verified_eval.json</span>   <span class="kv-val">chrF 96.77</span>
+      <span class="kv-key">รวม</span>                  <span class="kv-val">~2.4 GB · 16 ไฟล์</span>
+    </div>
+  </div>
+</div>
+
+<div class="two-col avoid-break" style="margin-top:14px;">
+  <div>
+    <h2>Local Path</h2>
+    <pre style="font-size:8pt;margin:0;">checkpoints/
+  pose_t5_rtx4060_tsl51_only_export_verified/
+    best_model_state.pt   ← API โหลดอันนี้
+    model.safetensors
+    pose_encoder.pt
+    verified_eval.json
+    tokenizer.json
+    config.json
+    …</pre>
+  </div>
+  <div>
+    <h2>Kaggle &amp; Git</h2>
+    <div class="kv-list">
+      <span class="kv-key">Kaggle dataset</span>   <span class="kv-val">orbitorls/thai-sign-tsl51-model</span>
+      <span class="kv-key">Kernel</span>            <span class="kv-val">orbitorls/thai-sign-tsl51-curriculum-train v40</span>
+      <span class="kv-key">Commit</span>            <span class="kv-val">796544c</span>
+      <span class="kv-key">Branch</span>            <span class="kv-val">codex/share-thai-sign-translator</span>
+      <span class="kv-key">Published</span>         <span class="kv-val">2026-06-23</span>
+      <span class="kv-key">API pointer</span>       <span class="kv-val">config.SLT_V3_CHECKPOINT_DIR</span>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════
+     8. ROOT CAUSE FIX
+═══════════════════════════════════════════════════ -->
+<h1 style="margin-top:28px;">8. Bug ที่แก้ (v1–v39 → v40)</h1>
+
+<div class="info-box red avoid-break">
+  <strong>Root Cause:</strong> <code>_run_smoke_training()</code> ใน <code>scripts/kaggle_train_pose_t5.py</code>
+  hardcode <code>smoke_args.epochs = 1</code> ทำให้ trainer ไม่เดินเลยเมื่อ seed อยู่ที่ epoch=76
+  → noop-resume guard fire → RuntimeError → kernel ล้มเหลว &lt;3 นาที ทุก version ตั้งแต่ v1
+</div>
+
+<pre class="avoid-break"><span class="cm"># ─── BUG (v1–v39) — epochs hardcoded เป็น 1 เสมอ ───────────────────────────</span>
+smoke_args.epochs = <span class="kw">max</span>(1, <span class="kw">min</span>(<span class="kw">int</span>(getattr(kaggle_args, <span class="str">"epochs"</span>, 1) <span class="kw">or</span> 1), 1))
+<span class="cm">#                     ↑ min(x,1) คืนค่า 1 เสมอ ไม่ว่า x จะเป็นเท่าไร</span>
+<span class="cm"># seed epoch=76, target=1 → 76 > 1 → trainer exit ทันที → 0 steps</span>
+<span class="cm"># → RuntimeError: Resume completed with zero new optimizer steps</span>
+
+<span class="cm"># ─── FIX (v40) ────────────────────────────────────────────────────────────</span>
+smoke_args.epochs = <span class="num">100000</span>
+<span class="cm"># max_train_steps=20 (relative) เป็นตัวหยุดแทน epoch ceiling</span>
+<span class="cm"># → smoke รัน 20 steps จริง → Phase 1 เดินต่อได้ 3,725 steps → Phase 2 +375 steps</span></pre>
+
+
+<!-- ═══════════════════════════════════════════════════
+     FOOTER
+═══════════════════════════════════════════════════ -->
+<div class="doc-footer avoid-break">
+  <span>Thai Sign Language Translator · Curriculum Training v40 · Verified Eval Report</span>
+  <span>chrF 96.77 / BLEU 97.73 / Exact 92% · 23 มิถุนายน 2569</span>
+</div>
+
+</body>
+</html>

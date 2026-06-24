@@ -57,6 +57,24 @@ function Resolve-PythonExecutable {
     throw "Unable to resolve a local Python executable for checkpoint sync."
 }
 
+function Format-ProcessArgument {
+    param([string]$Argument)
+
+    if ($null -eq $Argument) {
+        return '""'
+    }
+    if ($Argument -notmatch '[\s"]') {
+        return $Argument
+    }
+    return '"' + ($Argument -replace '"', '\"') + '"'
+}
+
+function Join-ProcessArgumentList {
+    param([string[]]$Arguments)
+
+    return (@($Arguments | ForEach-Object { Format-ProcessArgument $_ }) -join " ")
+}
+
 function Invoke-Colab {
     param(
         [string]$Command,
@@ -764,7 +782,7 @@ try {
     $pythonExe = Resolve-PythonExecutable
     $syncStdoutPath = Join-Path $MirrorDir "sync_stdout.log"
     $syncStderrPath = Join-Path $MirrorDir "sync_stderr.log"
-    Start-Process -FilePath $pythonExe -ArgumentList $syncArgs -WindowStyle Hidden -RedirectStandardOutput $syncStdoutPath -RedirectStandardError $syncStderrPath | Out-Null
+    Start-Process -FilePath $pythonExe -ArgumentList (Join-ProcessArgumentList $syncArgs) -WindowStyle Hidden -RedirectStandardOutput $syncStdoutPath -RedirectStandardError $syncStderrPath | Out-Null
     Write-LauncherStatus -StatusPath $statusPath -Phase "running" -Extra @{
         gpu = $selectedGpu
         mirror_dir = $MirrorDir

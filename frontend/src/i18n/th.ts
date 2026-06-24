@@ -2,9 +2,13 @@
 export const th = {
   appTitle: "แปลภาษามือไทย",
   appSubtitle: "บันทึกภาษามือแล้วรับคำแปลภาษาไทย",
+  assistantLabel: "ผลลัพธ์",
+  cameraPanelLabel: "กล้อง",
+  chatPanelLabel: "บทสนทนา",
 
   // Camera states
   cameraInit: "กำลังเตรียมกล้อง...",
+  cameraReady: "กล้องพร้อม",
   cameraError: "ไม่สามารถเข้าถึงกล้องได้",
   cameraErrorHint: "กรุณาอนุญาตการใช้กล้องในเบราว์เซอร์",
   cameraRetry: "ลองใหม่",
