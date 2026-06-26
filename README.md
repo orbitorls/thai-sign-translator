@@ -44,7 +44,9 @@ src/tsl/inference/sentence_translator.py  # checkpoint-based inference
 src/tsl/eval/sentence_metrics.py          # CER, TER, exact match
 src/tsl/api/app.py          # POST /translate-sentence
 web/                      # webcam UI
-scripts/                  # data-collection helpers
+scripts/                  # thin operational entrypoints
+scripts/data/             # dataset extraction / conversion implementations
+scripts/maintenance/      # repo hygiene / cleanup implementations
 tests/                    # mirror src/tsl structure
 ```
 

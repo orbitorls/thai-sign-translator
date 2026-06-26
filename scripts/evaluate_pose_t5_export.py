@@ -10,10 +10,12 @@ from pathlib import Path
 
 
 _REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-_SRC_ROOT = os.path.join(_REPO_ROOT, "src")
-for _path in (_REPO_ROOT, _SRC_ROOT):
-    if _path not in sys.path:
-        sys.path.insert(0, _path)
+if _REPO_ROOT not in sys.path:
+    sys.path.insert(0, _REPO_ROOT)
+
+from scripts._bootstrap import ensure_repo_paths
+
+ensure_repo_paths()
 
 from tsl.data.unified import load_manifest, load_features
 from tsl.eval.build_splits import split_by_video

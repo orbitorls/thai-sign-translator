@@ -12,6 +12,10 @@ _REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if _REPO_ROOT not in sys.path:
     sys.path.insert(0, _REPO_ROOT)
 
+from scripts._bootstrap import ensure_repo_paths
+
+ensure_repo_paths()
+
 from scripts.evaluate_pose_t5_export import _evaluate_export
 from scripts.export_pose_t5_checkpoint import _export_checkpoint
 from scripts.promote_pose_t5_export import _promote

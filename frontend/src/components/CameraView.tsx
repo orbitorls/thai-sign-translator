@@ -13,11 +13,10 @@ export function CameraView({ videoRef, recording }: CameraViewProps) {
         borderRadius: "var(--radius-lg)",
         overflow: "hidden",
         background: "#000",
-        boxShadow: "var(--shadow-md)",
+        boxShadow: "var(--shadow-sm)",
         width: "100%",
-        maxWidth: "480px",
         aspectRatio: "4/3",
-        margin: "0 auto",
+        border: "1px solid var(--color-border)",
       }}
     >
       <video
@@ -45,6 +44,7 @@ export function CameraView({ videoRef, recording }: CameraViewProps) {
             background: "rgba(0,0,0,0.6)",
             borderRadius: "var(--radius-full)",
             padding: "var(--space-1) var(--space-3)",
+            backdropFilter: "blur(10px)",
           }}
         >
           <span

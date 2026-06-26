@@ -1,29 +1,99 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="th">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Thai Sign Translator</title>
+  <title>Thai Sign Translator | แปลภาษามือไทย</title>
   <style>
-    body { font-family: system-ui, sans-serif; margin: 2rem; }
-    #video { width: 480px; height: 360px; background: #000; transform: scaleX(-1); }
-    #result { font-size: 1.5rem; margin-top: 1rem; }
-    #topk { color: #555; font-size: 1rem; }
-    button { font-size: 1rem; padding: 0.5rem 1rem; margin-right: 0.5rem; }
-    .recording { color: #c00; font-weight: bold; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { min-height: 100vh; font-family: system-ui, "Noto Sans Thai", sans-serif; color: #111827; background: linear-gradient(180deg, #fff, #eef4ff); overscroll-behavior: contain; }
+    button, select { font: inherit; }
+    .app { width: min(1120px, 100%); min-height: 100vh; margin: 0 auto; padding: 24px; display: flex; flex-direction: column; gap: 16px; }
+    header { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+    .brand { display: flex; align-items: center; gap: 12px; }
+    .mark { width: 44px; height: 44px; border-radius: 16px; display: grid; place-items: center; color: #fff; background: #2563eb; font-weight: 700; box-shadow: 0 10px 24px rgba(37, 99, 235, 0.12); }
+    h1 { font-size: 1.25rem; line-height: 1.25; }
+    .muted { color: #526071; font-size: 0.9rem; }
+    .layout { display: grid; gap: 16px; align-items: start; }
+    .panel, .chat { background: rgba(255,255,255,0.9); border: 1px solid #dbe3ef; border-radius: 20px; box-shadow: 0 20px 60px rgba(15,23,42,0.12); }
+    .panel { padding: 16px; display: flex; flex-direction: column; gap: 16px; }
+    .camera { position: relative; overflow: hidden; border-radius: 20px; background: #000; border: 1px solid #dbe3ef; aspect-ratio: 4 / 3; }
+    #video { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); display: block; }
+    #recBadge { position: absolute; top: 12px; left: 12px; display: none; color: #fff; background: rgba(0,0,0,0.62); border-radius: 999px; padding: 4px 12px; font-size: 0.875rem; font-weight: 700; }
+    .recording #recBadge { display: block; }
+    label { font-weight: 700; }
+    select { width: 100%; min-height: 44px; padding: 10px 12px; border-radius: 14px; border: 1px solid #dbe3ef; background: #f8fafc; color: #111827; }
+    .chat { min-height: min(720px, calc(100vh - 120px)); display: flex; flex-direction: column; overflow: hidden; }
+    .thread { flex: 1; padding: 16px; display: flex; flex-direction: column; gap: 16px; }
+    .row { display: flex; }
+    .row.user { justify-content: flex-end; }
+    .bubble { width: min(100%, 680px); padding: 16px; border-radius: 22px; border: 1px solid #dbe3ef; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+    .user .bubble { width: min(100%, 620px); background: #dbeafe; border-color: rgba(37,99,235,0.24); }
+    #result { font-size: 1.875rem; font-weight: 700; line-height: 1.4; word-break: break-word; }
+    #confidence { margin-top: 8px; color: #526071; font-size: 0.9rem; }
+    .composer { border-top: 1px solid #dbe3ef; background: #fff; padding: 16px; display: flex; flex-direction: column; align-items: center; gap: 12px; }
+    #recordBtn { min-width: 168px; min-height: 52px; border: 1px solid #2563eb; border-radius: 999px; color: #fff; background: #2563eb; font-weight: 700; cursor: pointer; box-shadow: 0 10px 24px rgba(37,99,235,0.12); }
+    #recordBtn.recording { background: #dc2626; border-color: #dc2626; box-shadow: 0 0 0 8px rgba(220,38,38,0.18); }
+    #status { min-height: 1.5em; color: #526071; font-size: 0.9rem; font-weight: 700; text-align: center; }
+    @media (min-width: 860px) {
+      .layout { grid-template-columns: minmax(300px, 380px) minmax(0, 1fr); }
+      .panel { position: sticky; top: 24px; }
+    }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/holistic/holistic.js" crossorigin="anonymous"></script>
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
 </head>
 <body>
-  <h1>Thai Sign Translator</h1>
-  <video id="video" autoplay playsinline muted></video>
-  <div>
-    <button id="recordBtn">Start recording</button>
-    <span id="status"></span>
-  </div>
-  <div id="result">—</div>
-  <div id="topk"></div>
+  <main class="app">
+    <header>
+      <div class="brand">
+        <div class="mark" aria-hidden="true">TS</div>
+        <div>
+          <h1>แปลภาษามือไทย</h1>
+          <p class="muted">บันทึกภาษามือแล้วรับคำแปลภาษาไทย</p>
+        </div>
+      </div>
+      <span id="cameraState" class="muted">กำลังเตรียมกล้อง...</span>
+    </header>
+    <div class="layout">
+      <aside class="panel" aria-label="กล้อง">
+        <div class="camera" id="cameraBox">
+          <video id="video" autoplay playsinline muted></video>
+          <div id="recBadge">REC</div>
+        </div>
+        <label for="modelSelect">โมเดล</label>
+        <select id="modelSelect" disabled>
+          <option>กำลังโหลดโมเดล...</option>
+        </select>
+      </aside>
+      <section class="chat" aria-label="บทสนทนา">
+        <div class="thread">
+          <div class="row">
+            <div class="bubble">
+              <p class="muted">ผลลัพธ์</p>
+              <p>บันทึกภาษามือแล้วระบบจะแปลเป็นประโยคภาษาไทย</p>
+            </div>
+          </div>
+          <div class="row user">
+            <div class="bubble">
+              <p class="muted">กล้อง</p>
+              <p id="captureSummary">เลือกโมเดลแล้วเริ่มบันทึก</p>
+            </div>
+          </div>
+          <div class="row">
+            <div class="bubble" aria-live="polite" aria-atomic="true">
+              <div id="result">-</div>
+              <div id="confidence"></div>
+            </div>
+          </div>
+        </div>
+        <div class="composer">
+          <div id="status" role="status"></div>
+          <button id="recordBtn" type="button">เริ่มบันทึก</button>
+        </div>
+      </section>
+    </div>
+  </main>
   <script src="/static/app.js"></script>
 </body>
 </html>

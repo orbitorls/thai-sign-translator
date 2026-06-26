@@ -214,3 +214,53 @@ def test_validate_eval_readiness_rejects_not_ready_reports():
         assert "low chrF" in str(exc)
     else:
         raise AssertionError("expected not-ready eval report to fail")
+
+
+def test_verify_cloud_preflight_tsl51_relaxed_passes(tmp_path):
+    """Phase 2 preflight: tsl51-only manifest (no features.zip, no manifest_quality.json).
+
+    With --raw-required-files manifest.csv, expected_manifest_rows=0, expected_source_counts='',
+    preflight should pass solely on 'manifest.csv exists'.
+    """
+    root = tmp_path / "tsl51"
+    root.mkdir()
+    features_dir = root / "features"
+    features_dir.mkdir()
+    np.save(features_dir / "seg001.npy", np.ones((3, 312), dtype=np.float32))
+    pd.DataFrame(
+        [
+            {
+                "segment_id": "seg001",
+                "npy_path": "features/seg001.npy",
+                "text": "สวัสดี",
+                "split": "train",
+                "source": "tsl51",
+                "feature_layout_version": "v3-312",
+            }
+        ]
+    ).to_csv(root / "manifest.csv", index=False)
+
+    report = verify_cloud_preflight(
+        str(root),
+        required_files=("manifest.csv",),
+        expected_manifest_rows=0,
+        expected_resolved_examples=0,
+        expected_source_counts="",
+    )
+
+    assert report["passed"] is True, f"preflight should pass: {report.get('failures')}"
+
+
+def test_kaggle_parser_has_raw_and_staged_required_files_flags():
+    args = _build_kaggle_parser().parse_args([])
+    assert args.raw_required_files == "manifest.csv,manifest_quality.json,features.zip"
+    assert args.staged_required_files == "manifest.csv,manifest_quality.json"
+
+
+def test_kaggle_parser_raw_required_files_override():
+    args = _build_kaggle_parser().parse_args([
+        "--raw-required-files", "manifest.csv",
+        "--staged-required-files", "manifest.csv",
+    ])
+    assert args.raw_required_files == "manifest.csv"
+    assert args.staged_required_files == "manifest.csv"

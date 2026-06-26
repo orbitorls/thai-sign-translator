@@ -22,12 +22,13 @@ from pathlib import Path
 
 import torch
 
-# Ensure tsl package is importable
 _repo_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-_src = os.path.join(_repo_root, "src")
-for _p in (_src, _repo_root):
-    if _p not in sys.path:
-        sys.path.insert(0, _p)
+if _repo_root not in sys.path:
+    sys.path.insert(0, _repo_root)
+
+from scripts._bootstrap import ensure_repo_paths
+
+ensure_repo_paths()
 
 from tsl.train.checkpointing import find_best_checkpoint, find_latest_checkpoint  # noqa: E402
 from tsl.train.train_pose_t5 import _build_parser, main  # noqa: E402

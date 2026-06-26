@@ -16,12 +16,8 @@ export function ResultCard({ status, result, error, errorStatus }: ResultCardPro
     <div
       aria-live="polite"
       aria-atomic="true"
+      className="message-bubble"
       style={{
-        background: "var(--color-surface)",
-        borderRadius: "var(--radius-lg)",
-        padding: "var(--space-6)",
-        boxShadow: "var(--shadow-sm)",
-        border: "1px solid var(--color-border)",
         minHeight: 120,
         display: "flex",
         flexDirection: "column",
@@ -49,6 +45,7 @@ export function ResultCard({ status, result, error, errorStatus }: ResultCardPro
               fontWeight: 700,
               color: "var(--color-text)",
               lineHeight: 1.4,
+              wordBreak: "break-word",
             }}
           >
             {result.sentence || th.resultPlaceholder}

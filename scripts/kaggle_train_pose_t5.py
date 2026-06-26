@@ -44,6 +44,12 @@ import subprocess
 import sys
 import zipfile
 
+_REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if _REPO_ROOT not in sys.path:
+    sys.path.insert(0, _REPO_ROOT)
+
+from scripts._bootstrap import ensure_repo_paths
+
 # ---------------------------------------------------------------------------
 # Kaggle-specific paths — edit these to match your attached datasets
 # ---------------------------------------------------------------------------
@@ -87,13 +93,7 @@ def _ensure_dependencies() -> None:
 
 def _setup_pythonpath() -> None:
     """Ensure src/ is on sys.path so ``tsl.*`` imports resolve."""
-    repo_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    src_dir = os.path.join(repo_root, "src")
-    if src_dir not in sys.path:
-        sys.path.insert(0, src_dir)
-    # Also make repo root available for config.py
-    if repo_root not in sys.path:
-        sys.path.insert(0, repo_root)
+    ensure_repo_paths()
 
 
 def _resolve_bool_flag(value) -> bool:
@@ -180,7 +180,9 @@ def _run_smoke_training(kaggle_args: argparse.Namespace, *, train_main) -> dict 
     smoke_args.out_dir = str(smoke_dir)
     smoke_args.max_train_steps = smoke_steps
     smoke_args.require_gpu = True
-    smoke_args.epochs = max(1, min(int(getattr(kaggle_args, "epochs", 1) or 1), 1))
+    # Use a large epoch ceiling so the epoch limit never stops smoke before max_train_steps.
+    # Without this, a warm-start seed at epoch=76 with epochs=1 would take 0 steps.
+    smoke_args.epochs = 100000
     smoke_args.eval_steps = max(1, smoke_steps)
     smoke_args.checkpoint_steps = max(1, smoke_steps)
     smoke_args.allow_noop_resume = "false"
@@ -429,6 +431,18 @@ def _build_kaggle_parser() -> argparse.ArgumentParser:
         default="",
         help="Optional output JSON path for the cloud dataset preflight report.",
     )
+    p.add_argument(
+        "--raw-required-files",
+        type=str,
+        default="manifest.csv,manifest_quality.json,features.zip",
+        help="Comma-separated list of files required in the raw (pre-unzip) dataset root.",
+    )
+    p.add_argument(
+        "--staged-required-files",
+        type=str,
+        default="manifest.csv,manifest_quality.json",
+        help="Comma-separated list of files required after staging (post-unzip) dataset root.",
+    )
     return p
 
 
@@ -447,12 +461,14 @@ def main() -> None:
 
     kaggle_args = _build_kaggle_parser().parse_args()
     raw_data_roots = kaggle_args.data_roots
+    raw_required = tuple(f.strip() for f in kaggle_args.raw_required_files.split(",") if f.strip())
+    staged_required = tuple(f.strip() for f in kaggle_args.staged_required_files.split(",") if f.strip())
     raw_preflight_report = verify_cloud_preflight(
         raw_data_roots,
         expected_manifest_rows=int(getattr(kaggle_args, "expected_manifest_rows", 0) or 0),
         expected_resolved_examples=int(getattr(kaggle_args, "expected_resolved_examples", 0) or 0),
         expected_source_counts=str(getattr(kaggle_args, "expected_source_counts", "")),
-        required_files=("manifest.csv", "manifest_quality.json", "features.zip"),
+        required_files=raw_required,
     )
     kaggle_args.data_roots = _prepare_data_roots(raw_data_roots)
     if getattr(kaggle_args, "eval_data_roots", ""):
@@ -462,7 +478,7 @@ def main() -> None:
         expected_manifest_rows=int(getattr(kaggle_args, "expected_manifest_rows", 0) or 0),
         expected_resolved_examples=int(getattr(kaggle_args, "expected_resolved_examples", 0) or 0),
         expected_source_counts=str(getattr(kaggle_args, "expected_source_counts", "")),
-        required_files=("manifest.csv", "manifest_quality.json"),
+        required_files=staged_required,
     )
     preflight_report = _merge_preflight_reports(raw_preflight_report, staged_preflight_report)
     preflight_report_path = (

@@ -1,7 +1,10 @@
 # HANDOFF — Thai Sign Language Translator
 
-> สถานะ ณ **2026-06-20** · เขียนเพื่อส่งต่อให้ session/คนถัดไปทำงานต่อได้ทันที โดยไม่ต้องไล่ย้อน context เดิม
+> สถานะ ณ **2026-06-23** · เขียนเพื่อส่งต่อให้ session/คนถัดไปทำงานต่อได้ทันที โดยไม่ต้องไล่ย้อน context เดิม
 > (ฉบับก่อนหน้า 2026-06-16 = ยุค `slt_v2`/legacy — เนื้อหายังเก็บไว้ใน §9 บทเรียนสำคัญ)
+>
+> **อัปเดตล่าสุด 2026-06-23:** Kaggle curriculum training (v40) สำเร็จ — Phase 1 pretrain ทุก 1938 ตัวอย่าง → Phase 2 finetune TSL-51
+> ได้ **chrF 96.77 / BLEU 97.73 / exact-match 92%** (n=25, seed=42). Promoted vs incumbent chrF 86.95. ดูรายละเอียดใน §0 item 16.
 
 ---
 
@@ -472,15 +475,42 @@
    - แต่พอ health probe/exec ใช้จริงแล้ว fail และสุดท้าย `colab status -s thai-sign-train-managed-r4` กลายเป็น `Session ... not found`
    - มีหลักฐานไว้ที่ `checkpoints/colab_sync/thai-sign-train-managed-r4-reuse/launcher.status.json`
 
+16. **Kaggle Curriculum Training v40 — สำเร็จ 2026-06-23** 🎯
+   - workflow: Phase 1 pretrain ทุก 1938 ตัวอย่าง (tsl51+thaisignvis+youtube_sl25_thai) → Phase 2 finetune TSL-51 เท่านั้น
+   - kernel: `orbitorls/thai-sign-tsl51-curriculum-train` version 40
+   - GPU: T4 (sm_75, 15 GB), torch 2.10.0+cu128
+   - seed: `orbitorls/thai-sign-tsl51-seed` (`best_model_state.pt` step=3075, chrF-86)
+   - Phase 1:
+     - stopped_reason: `early_stopping` (val_loss patience 8)
+     - final global_step: 5575
+   - Phase 2:
+     - started from Phase 1 best (step=5200)
+     - stopped_reason: `early_stopping` (val_chrf patience 10)
+     - final global_step: 5575
+     - best val_chrf during training: **96.77** (at step 5325)
+   - verified eval (n=25, seed=42, data=tsl51, split=manifest):
+     - **chrF: 96.77**
+     - **BLEU: 97.73**
+     - **exact_match: 23/25 = 92%**
+   - promotion: `promoted: true` — candidate (96.77) beat incumbent (86.95)
+   - stable artifact: `checkpoints/pose_t5_rtx4060_tsl51_only_export_verified/`
+   - stable eval: `checkpoints/pose_t5_rtx4060_tsl51_only_export_verified_eval.json`
+   - Kaggle model dataset: `orbitorls/thai-sign-tsl51-model` (published 2026-06-23)
+   - root cause ที่แก้ระหว่างทาง:
+     - `scripts/kaggle_train_pose_t5.py:_run_smoke_training` เคย hardcode `smoke_args.epochs = 1`
+     - ทำให้ warm-start seed ที่ epoch=76 ทำ 0 smoke steps → noop-resume guard fire
+     - แก้: `smoke_args.epochs = 100000` + notebook ส่ง `--smoke-steps 0` (belt-and-suspenders)
+
 ### สถานะ artifact ที่ “ใช้งานได้ที่สุดตอนนี้”
 
-- inference path ที่ดีที่สุดตอนนี้คือ:
-  - checkpoint dir: `checkpoints/pose_t5_a100_r4_final_export/`
-  - decoder defaults ใหม่ใน `src/tsl/inference/pose_t5_translator.py`
+- **inference path ที่ดีที่สุด ณ 2026-06-23:**
+  - `checkpoints/pose_t5_rtx4060_tsl51_only_export_verified/` — chrF **96.77** / BLEU **97.73** / exact **92%**
+  - Kaggle: `orbitorls/thai-sign-tsl51-model`
+  - `config.SLT_V3_CHECKPOINT_DIR` ชี้ที่ dir นี้อยู่แล้ว — restart API โหลดทันที
+- (ก่อนหน้านี้: `checkpoints/pose_t5_a100_r4_final_export/` → chrF 12.36, superseded)
 - report หลักฐาน:
-  - `checkpoints/r4_vs_current_tuned_decode_corrected_metrics.json`
-  - `checkpoints/pose_t5_a100_final_export/eval_samples.json`
-  - `checkpoints/pose_t5_a100_final_export/eval_samples_tuned_decode.json`
+  - `checkpoints/pose_t5_rtx4060_tsl51_only_export_verified_eval.json`
+  - `checkpoints/pose_t5_rtx4060_tsl51_only_export_verified_samples.json`
 
 ---
 

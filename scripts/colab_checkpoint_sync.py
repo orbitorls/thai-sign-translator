@@ -52,6 +52,10 @@ def _sanitize_exec_text_output(text: str) -> str:
     return text
 
 
+def _sanitize_error_text(text: str) -> str:
+    return re.sub(r"(colab-runtime-proxy-token=)[^&\s]+", r"\1<redacted>", text)
+
+
 def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description="Mirror remote Colab checkpoints locally and publish resumable Kaggle dataset versions."
@@ -390,7 +394,7 @@ def _sync_remote_files(
                 if attempt < download_retries:
                     time.sleep(retry_delay_sec)
         if last_error:
-            failures[name] = last_error
+            failures[name] = _sanitize_error_text(last_error)
             if on_progress is not None:
                 on_progress(downloaded, failures)
     return downloaded, failures
@@ -478,9 +482,10 @@ def _write_sync_state(
     latest_remote_checkpoint: str | None,
     session_status: dict[str, str | None] | None,
 ) -> None:
+    sanitized_failures = {key: _sanitize_error_text(value) for key, value in failures.items()}
     state = {
         "downloaded": downloaded,
-        "failed": failures,
+        "failed": sanitized_failures,
         "latest_checkpoint": latest_checkpoint,
         "latest_remote_checkpoint": latest_remote_checkpoint,
         "session_status": session_status,
@@ -637,7 +642,8 @@ def main(argv: list[str] | None = None) -> int:
             )
             error_log = mirror_dir / "sync_error.log"
             if failures:
-                error_log.write_text(json.dumps(failures, ensure_ascii=False, indent=2), encoding="utf-8")
+                sanitized_failures = {key: _sanitize_error_text(value) for key, value in failures.items()}
+                error_log.write_text(json.dumps(sanitized_failures, ensure_ascii=False, indent=2), encoding="utf-8")
             elif error_log.exists():
                 error_log.unlink()
 
@@ -647,7 +653,7 @@ def main(argv: list[str] | None = None) -> int:
             time.sleep(args.interval_sec)
     except Exception as exc:
         errors += 1
-        (mirror_dir / "sync_error.log").write_text(str(exc), encoding="utf-8")
+        (mirror_dir / "sync_error.log").write_text(_sanitize_error_text(str(exc)), encoding="utf-8")
         if args.once or errors >= args.max_errors:
             return 1
         time.sleep(args.interval_sec)

@@ -22,6 +22,7 @@ export function StatusBar({ message, type = "info" }: StatusBarProps) {
         color: colors[type],
         textAlign: "center",
         minHeight: "1.5em",
+        fontWeight: 600,
       }}
     >
       {message}

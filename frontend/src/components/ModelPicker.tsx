@@ -19,14 +19,21 @@ export function ModelPicker({ models, selectedId, onChange, disabled }: ModelPic
         style={{
           fontSize: "var(--font-size-sm)",
           fontWeight: 600,
-          color: "var(--color-text-muted)",
-          letterSpacing: "0.04em",
-          textTransform: "uppercase",
+          color: "var(--color-text)",
         }}
       >
         {th.modelLabel}
       </label>
-      <div style={{ display: "flex", flexWrap: "wrap", gap: "var(--space-2)" }}>
+      <div
+        style={{
+          display: "grid",
+          gap: "var(--space-2)",
+          padding: "var(--space-2)",
+          border: "1px solid var(--color-border)",
+          borderRadius: "var(--radius-lg)",
+          background: "var(--color-surface-soft)",
+        }}
+      >
         {models.map((m) => {
           const isSelected = m.id === selectedId;
           const isAvailable = m.available;
@@ -39,9 +46,9 @@ export function ModelPicker({ models, selectedId, onChange, disabled }: ModelPic
               aria-pressed={isSelected}
               title={!isAvailable ? th.modelUnavailable : undefined}
               style={{
-                padding: "var(--space-2) var(--space-4)",
-                borderRadius: "var(--radius-full)",
-                border: `2px solid ${isSelected ? "var(--color-primary)" : "var(--color-border)"}`,
+                padding: "var(--space-3) var(--space-4)",
+                borderRadius: "var(--radius-md)",
+                border: `1px solid ${isSelected ? "var(--color-primary)" : "transparent"}`,
                 background: isSelected ? "var(--color-primary)" : "var(--color-surface)",
                 color: isSelected ? "#fff" : isAvailable ? "var(--color-text)" : "var(--color-text-placeholder)",
                 fontFamily: "var(--font-family)",
@@ -50,8 +57,9 @@ export function ModelPicker({ models, selectedId, onChange, disabled }: ModelPic
                 cursor: isAvailable && !disabled ? "pointer" : "not-allowed",
                 opacity: isAvailable ? 1 : 0.45,
                 transition: "var(--transition)",
-                whiteSpace: "nowrap",
+                textAlign: "left",
                 minHeight: "44px",
+                boxShadow: isSelected ? "var(--shadow-sm)" : "none",
               }}
             >
               {m.label_th}

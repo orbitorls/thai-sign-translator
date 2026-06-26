@@ -15,6 +15,7 @@ from scripts.colab_checkpoint_sync import (
     _release_sync_lock,
     _refresh_dataset_dir_from_kaggle,
     _get_session_status,
+    _sanitize_error_text,
     _sanitize_exec_text_output,
     _seed_mirror_from_dataset_dir,
     best_checkpoint_name,
@@ -61,6 +62,19 @@ def test_parse_status_output_treats_not_found_as_missing_session():
     assert parsed["session"] is None
     assert parsed["hardware"] is None
     assert parsed["status"] is None
+
+
+def test_sanitize_error_text_redacts_colab_proxy_token():
+    text = (
+        "500 Server Error for url: https://example.invalid/api?"
+        "authuser=0&colab-runtime-proxy-token=secret.jwt.value&content=1"
+    )
+
+    sanitized = _sanitize_error_text(text)
+
+    assert "secret.jwt.value" not in sanitized
+    assert "colab-runtime-proxy-token=<redacted>" in sanitized
+    assert "content=1" in sanitized
 
 
 def test_latest_checkpoint_name_picks_highest_step():

@@ -1,0 +1,20 @@
+{
+  "id": "orbitorls/thai-sign-tsl51-curriculum-train",
+  "title": "Thai Sign TSL51 Curriculum Train",
+  "code_file": "notebook.ipynb",
+  "language": "python",
+  "kernel_type": "notebook",
+  "is_private": true,
+  "machine_shape": "NvidiaTeslaT4",
+  "enable_gpu": true,
+  "enable_internet": true,
+  "dataset_sources": [
+    "orbitorls/thai-sign-code",
+    "orbitorls/thai-sign-mixed-all-v6-archived",
+    "orbitorls/thai-sign-tsl51",
+    "orbitorls/thai-sign-mt5small",
+    "orbitorls/thai-sign-tsl51-seed"
+  ],
+  "competition_sources": [],
+  "kernel_sources": []
+}

@@ -18,14 +18,13 @@ from __future__ import annotations
 import sys
 import os
 
-# ---------------------------------------------------------------------------
-# Ensure src/ is on sys.path when running from the repo root
-# ---------------------------------------------------------------------------
 _REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-_SRC_DIR = os.path.join(_REPO_ROOT, "src")
-for _p in (_SRC_DIR, _REPO_ROOT):
-    if _p not in sys.path:
-        sys.path.insert(0, _p)
+if _REPO_ROOT not in sys.path:
+    sys.path.insert(0, _REPO_ROOT)
+
+from scripts._bootstrap import ensure_repo_paths
+
+ensure_repo_paths()
 
 
 import math
