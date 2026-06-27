@@ -1,185 +1,223 @@
-import React from "react";
+import React, { useEffect, useRef, useState } from "react";
+import { TranslateResult } from "./api/client";
 import { ModelsProvider, useModels } from "./hooks/ModelsProvider";
 import { useHolisticCapture } from "./hooks/useHolisticCapture";
 import { useTranslate } from "./hooks/useTranslate";
 import { CameraView } from "./components/CameraView";
-import { RecordButton } from "./components/RecordButton";
-import { ModelPicker } from "./components/ModelPicker";
 import { ResultCard } from "./components/ResultCard";
-import { StatusBar } from "./components/StatusBar";
 import { SupportedPhrases } from "./components/SupportedPhrases";
 import { th } from "./i18n/th";
+
+const CONFIDENCE_FLOOR = 0.3;
+const HANDS_GONE_DEBOUNCE_MS = 800;
+const MIN_HAND_FRAMES = 6;
+const MIN_TOTAL_FRAMES = 8;
 
 function Translator() {
   const { models, selectedModelId, loading: modelsLoading, error: modelsError, setSelectedModelId } = useModels();
   const capture = useHolisticCapture();
   const translator = useTranslate();
-  const selectedModel = models.find((model) => model.id === selectedModelId);
+  const selectedModel = models.find((m) => m.id === selectedModelId);
+  const [phrasesOpen, setPhrasesOpen] = useState(false);
+  const [displayedResult, setDisplayedResult] = useState<TranslateResult | null>(null);
 
-  function handleToggleRecord() {
-    if (capture.recording) {
-      const frames = capture.stop();
-      if (frames.length === 0) {
-        // No frames captured — show hint but don't call API
-        translator.reset();
-        return;
+  // Stable refs for interval/timeout callbacks — always point at current values.
+  const captureRef = useRef(capture);
+  captureRef.current = capture;
+  const translatorRef = useRef(translator);
+  translatorRef.current = translator;
+  const selectedModelIdRef = useRef(selectedModelId);
+  selectedModelIdRef.current = selectedModelId;
+  const debounceRef = useRef<ReturnType<typeof setTimeout>>();
+
+  // Auto-start collection as soon as camera is ready.
+  useEffect(() => {
+    if (!capture.ready) return;
+    captureRef.current.start();
+  }, [capture.ready]);
+
+  // Presence-based segmentation: translate when hands disappear for 0.8 s.
+  useEffect(() => {
+    if (!capture.ready) return;
+
+    if (capture.handsPresent) {
+      // Hands appeared — cancel pending translate trigger and ensure we're collecting.
+      clearTimeout(debounceRef.current);
+      if (!captureRef.current.recording) {
+        captureRef.current.start();
       }
-      translator.run(frames, selectedModelId ?? undefined);
     } else {
-      translator.reset();
-      capture.start();
+      // Hands gone — schedule translate after debounce.
+      clearTimeout(debounceRef.current);
+      debounceRef.current = setTimeout(() => {
+        const trans = translatorRef.current;
+        if (trans.status === "loading") return;
+        const { frames, handFrameCount } = captureRef.current.stop();
+        captureRef.current.start(); // restart immediately for next sign
+        if (handFrameCount >= MIN_HAND_FRAMES && frames.length >= MIN_TOTAL_FRAMES) {
+          trans.run(frames, selectedModelIdRef.current ?? undefined);
+        }
+      }, HANDS_GONE_DEBOUNCE_MS);
     }
-  }
 
-  const isDisabled = !capture.ready || modelsLoading;
+    return () => clearTimeout(debounceRef.current);
+  }, [capture.handsPresent, capture.ready]);
 
-  // Derive status bar message
-  let statusMsg = "";
-  let statusType: "info" | "warn" | "error" | "success" = "info";
+  // Update displayed result only when confidence clears the floor.
+  useEffect(() => {
+    if (translator.status === "success" && translator.result) {
+      if (translator.result.score >= CONFIDENCE_FLOOR) {
+        setDisplayedResult(translator.result);
+      }
+    }
+  }, [translator.status, translator.result]);
+
+  // Auto-reset error after 3 s so the loop can continue.
+  useEffect(() => {
+    if (translator.status !== "error") return;
+    const id = setTimeout(() => translatorRef.current.reset(), 3000);
+    return () => clearTimeout(id);
+  }, [translator.status]);
+
   const hasCameraError = Boolean(capture.cameraError);
-  if (hasCameraError) {
-    statusMsg = `${th.cameraError} — ${th.cameraErrorHint}`;
-    statusType = "error";
-  } else if (!capture.ready) {
-    statusMsg = th.cameraInit;
-  } else if (modelsError) {
-    statusMsg = th.modelLoadError;
-    statusType = "warn";
-  } else if (capture.recording && capture.frameCount === 0) {
-    statusMsg = th.recording;
-  }
 
-  // After stop with no frames
-  const showNoFrames = !capture.recording && translator.status === "idle" && capture.frameCount === 0 && capture.ready;
+  // Derive a status for the result card that uses displayedResult instead of
+  // translator.result so low-confidence windows don't replace the displayed text.
+  const resultStatus = translator.status === "success"
+    ? (displayedResult && displayedResult === translator.result ? "success" : "loading")
+    : translator.status;
 
   return (
-    <main className="app-shell">
-      <header className="app-header">
-        <div className="brand-lockup">
-          <div className="brand-mark" aria-hidden="true">TS</div>
-          <div style={{ minWidth: 0 }}>
-            <h1
-              style={{
-                fontSize: "var(--font-size-xl)",
-                fontWeight: 700,
-                color: "var(--color-text)",
-                lineHeight: 1.25,
-              }}
-            >
-              {th.appTitle}
-            </h1>
-            <p style={{ color: "var(--color-text-muted)", fontSize: "var(--font-size-sm)" }}>
-              {selectedModel?.label_th ?? th.appSubtitle}
-            </p>
-          </div>
+    <main className="app-immersive">
+      {/* Full-screen camera background */}
+      <CameraView videoRef={capture.videoRef} />
+
+      {/* ── Top glass bar ── */}
+      <div className="glass-top-bar">
+        <div className="brand-glass">
+          <div className="brand-mark-glass">TS</div>
+          <span className="brand-name-glass">{th.appTitle}</span>
         </div>
-        <span
-          style={{
-            color: capture.ready ? "var(--color-success)" : "var(--color-text-muted)",
-            fontSize: "var(--font-size-sm)",
-            fontWeight: 600,
-            whiteSpace: "nowrap",
-          }}
-        >
-          {capture.ready ? th.cameraReady : th.cameraInit}
-        </span>
-      </header>
 
-      <div className="chat-layout">
-        <aside className="side-panel" aria-label={th.cameraPanelLabel}>
-          <CameraView videoRef={capture.videoRef} recording={capture.recording} />
-          {modelsLoading ? (
-            <p style={{ color: "var(--color-text-muted)", fontSize: "var(--font-size-sm)" }}>
-              {th.modelLoading}
-            </p>
-          ) : (
-            <ModelPicker
-              models={models}
-              selectedId={selectedModelId}
-              onChange={setSelectedModelId}
-              disabled={capture.recording || translator.status === "loading"}
+        <div className="top-controls-right">
+          <span className="live-chip">
+            <span
+              className={[
+                "live-dot",
+                !capture.ready ? "offline" : "",
+                capture.ready && capture.handsPresent ? "hands" : "",
+              ]
+                .filter(Boolean)
+                .join(" ")}
             />
+            {capture.ready ? "กล้อง Live" : "กำลังเปิด..."}
+          </span>
+
+          {!modelsLoading && selectedModel && (
+            <span className="glass-chip" style={{ cursor: "default" }}>
+              {selectedModel.label_th}
+            </span>
           )}
-        </aside>
 
-        <section className="chat-main" aria-label={th.chatPanelLabel}>
-          <div className="chat-thread">
-            <div className="message-row">
-              <div className="message-bubble">
-                <p style={{ color: "var(--color-text-muted)", fontSize: "var(--font-size-sm)", marginBottom: "var(--space-2)" }}>
-                  {th.assistantLabel}
-                </p>
-                <p style={{ fontSize: "var(--font-size-lg)", fontWeight: 600, color: "var(--color-text)" }}>
-                  {th.appSubtitle}
-                </p>
-              </div>
-            </div>
-
-            <div className="message-row user">
-              <div className="message-bubble">
-                <p style={{ color: "var(--color-text-muted)", fontSize: "var(--font-size-sm)", marginBottom: "var(--space-2)" }}>
-                  {th.cameraPanelLabel}
-                </p>
-                <p style={{ fontSize: "var(--font-size-base)", fontWeight: 600 }}>
-                  {capture.recording
-                    ? `${th.recording} ${th.frames(capture.frameCount)}`
-                    : selectedModel?.label_th ?? th.modelLabel}
-                </p>
-              </div>
-            </div>
-
-            <div className="message-row">
-              <ResultCard
-                status={translator.status}
-                result={translator.result}
-                error={translator.error}
-                errorStatus={translator.errorStatus}
-              />
-            </div>
-          </div>
-
-          <div className="composer">
-            <StatusBar
-              message={statusMsg || (showNoFrames ? th.noFrames : "")}
-              type={statusType}
-            />
-            <RecordButton
-              recording={capture.recording}
-              disabled={isDisabled}
-              frameCount={capture.recording ? capture.frameCount : undefined}
-              onClick={handleToggleRecord}
-            />
-          </div>
-        </section>
+          <button
+            className="glass-chip"
+            onClick={() => setPhrasesOpen((v) => !v)}
+            aria-expanded={phrasesOpen}
+          >
+            {th.supportedPhrasesTitle}
+          </button>
+        </div>
       </div>
 
-      {/* Camera retry — shown only when the camera failed to start */}
+      {/* ── Camera permission error ── */}
       {hasCameraError && (
-        <div style={{ display: "flex", justifyContent: "center", marginTop: "var(--space-2)" }}>
-          <button
-            type="button"
-            onClick={() => capture.start()}
-            style={{
-              padding: "var(--space-2) var(--space-4)",
-              borderRadius: "var(--radius-full)",
-              border: "1px solid var(--color-primary)",
-              background: "var(--color-primary-light)",
-              color: "var(--color-primary)",
-              fontSize: "var(--font-size-sm)",
-              fontWeight: 600,
-              cursor: "pointer",
-              fontFamily: "var(--font-family)",
-              transition: "background var(--transition)",
-            }}
-          >
+        <div className="glass-camera-error">
+          <p style={{ color: "#fca5a5", fontWeight: 700, fontSize: "var(--font-size-base)" }}>
+            {th.cameraError}
+          </p>
+          <p style={{ color: "rgba(255,255,255,0.65)", fontSize: "var(--font-size-sm)" }}>
+            {th.cameraErrorHint}
+          </p>
+          <button className="glass-action-btn" onClick={() => captureRef.current.start()}>
             {th.cameraRetry}
           </button>
         </div>
       )}
 
-      {/* Supported phrases — lets users know what they can sign */}
-      <SupportedPhrases />
+      {/* ── Always-visible live translation panel ── */}
+      <div className="result-glass-panel live">
+        <LiveStatusRow
+          cameraReady={capture.ready}
+          translating={translator.status === "loading"}
+          hasResult={Boolean(displayedResult)}
+          hasError={translator.status === "error"}
+          modelsError={modelsError}
+        />
+        <ResultCard
+          status={resultStatus}
+          result={displayedResult}
+          error={translator.error}
+          errorStatus={translator.errorStatus}
+          variant="glass"
+        />
+      </div>
+
+      {/* ── Supported phrases glass panel (slides up) ── */}
+      <div
+        className={`result-glass-panel${phrasesOpen ? " open" : ""}`}
+        style={{ zIndex: 30 }}
+        aria-hidden={!phrasesOpen}
+      >
+        <div className="glass-panel-handle" />
+        <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: "var(--space-3)" }}>
+          <button className="glass-chip" onClick={() => setPhrasesOpen(false)} aria-label="ปิด">
+            ✕ ปิด
+          </button>
+        </div>
+        <SupportedPhrases glass />
+      </div>
     </main>
+  );
+}
+
+interface LiveStatusRowProps {
+  cameraReady: boolean;
+  translating: boolean;
+  hasResult: boolean;
+  hasError: boolean;
+  modelsError: string | null;
+}
+
+function LiveStatusRow({ cameraReady, translating, hasResult, hasError, modelsError }: LiveStatusRowProps) {
+  let label = "";
+  let color = "rgba(255,255,255,0.5)";
+
+  if (!cameraReady) {
+    label = th.cameraInit;
+  } else if (modelsError) {
+    label = th.modelLoadError;
+    color = "#fcd34d";
+  } else if (hasError) {
+    label = "";
+  } else if (translating) {
+    label = th.translating;
+  } else if (!hasResult) {
+    label = "แสดงภาษามือต่อกล้อง";
+  }
+
+  if (!label) return null;
+
+  return (
+    <p
+      style={{
+        fontSize: "var(--font-size-sm)",
+        color,
+        marginBottom: "var(--space-2)",
+        fontWeight: 500,
+      }}
+    >
+      {label}
+    </p>
   );
 }
 

@@ -2,14 +2,11 @@ import React, { useEffect, useState } from "react";
 import { getSupportedPhrases, SupportedPhrasesResult } from "../api/client";
 import { th } from "../i18n/th";
 
-/**
- * SupportedPhrases — collapsible panel showing which phrases the model knows.
- *
- * The closed-vocab TSL-51 model only recognises the ~252 sentences it was
- * trained on. Showing this list prevents users from signing arbitrary
- * phrases and concluding the model is broken.
- */
-export function SupportedPhrases() {
+interface SupportedPhrasesProps {
+  glass?: boolean;
+}
+
+export function SupportedPhrases({ glass }: SupportedPhrasesProps) {
   const [data, setData] = useState<SupportedPhrasesResult | null>(null);
   const [error, setError] = useState(false);
   const [open, setOpen] = useState(false);
@@ -22,6 +19,62 @@ export function SupportedPhrases() {
 
   const count = data?.total ?? 0;
 
+  // Glass variant: flat list, no nested toggle (parent panel handles open/close)
+  if (glass) {
+    return (
+      <section>
+        <p style={{ color: "rgba(255,255,255,0.55)", fontSize: "var(--font-size-xs)", marginBottom: "var(--space-3)" }}>
+          {th.supportedPhrasesScope}
+          {count > 0 && (
+            <span style={{ marginLeft: "var(--space-2)", color: "rgba(255,255,255,0.75)", fontWeight: 600 }}>
+              · {th.supportedPhrasesCount(count)}
+            </span>
+          )}
+        </p>
+        {error && (
+          <p style={{ color: "#fca5a5", fontSize: "var(--font-size-sm)" }}>
+            {th.supportedPhrasesUnavailable}
+          </p>
+        )}
+        {!error && data && data.phrases.length === 0 && (
+          <p style={{ color: "rgba(255,255,255,0.5)", fontSize: "var(--font-size-sm)" }}>
+            {data.note || th.supportedPhrasesEmpty}
+          </p>
+        )}
+        {!error && data && data.phrases.length > 0 && (
+          <ul
+            style={{
+              listStyle: "none",
+              display: "flex",
+              flexWrap: "wrap",
+              gap: "var(--space-2)",
+              maxHeight: "45dvh",
+              overflowY: "auto",
+            }}
+          >
+            {data.phrases.map((phrase) => (
+              <li
+                key={phrase}
+                style={{
+                  background: "rgba(255,255,255,0.12)",
+                  border: "1px solid rgba(255,255,255,0.2)",
+                  borderRadius: "var(--radius-full)",
+                  padding: "var(--space-1) var(--space-3)",
+                  fontSize: "var(--font-size-sm)",
+                  color: "#fff",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {phrase}
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+    );
+  }
+
+  // Default variant: collapsible card (used in legacy desktop layout if ever restored)
   return (
     <section
       style={{
@@ -31,7 +84,6 @@ export function SupportedPhrases() {
         overflow: "hidden",
       }}
     >
-      {/* Header / toggle */}
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
@@ -75,25 +127,12 @@ export function SupportedPhrases() {
         </span>
       </button>
 
-      {/* Scope note — always visible */}
-      <p
-        style={{
-          padding: "0 var(--space-4) var(--space-2)",
-          fontSize: "var(--font-size-xs)",
-          color: "var(--color-text-muted)",
-        }}
-      >
+      <p style={{ padding: "0 var(--space-4) var(--space-2)", fontSize: "var(--font-size-xs)", color: "var(--color-text-muted)" }}>
         {th.supportedPhrasesScope}
       </p>
 
-      {/* Collapsed body */}
       {open && (
-        <div
-          style={{
-            padding: "var(--space-2) var(--space-4) var(--space-4)",
-            borderTop: "1px solid var(--color-primary)",
-          }}
-        >
+        <div style={{ padding: "var(--space-2) var(--space-4) var(--space-4)", borderTop: "1px solid var(--color-primary)" }}>
           {error && (
             <p style={{ color: "var(--color-danger)", fontSize: "var(--font-size-sm)" }}>
               {th.supportedPhrasesUnavailable}

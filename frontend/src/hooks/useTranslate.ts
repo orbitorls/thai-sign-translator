@@ -26,7 +26,7 @@ export function useTranslate(): TranslateState {
     setStatus("loading");
     setError(null);
     setErrorStatus(null);
-    setResult(null);
+    // Keep previous result visible during loading — avoids blank flash.
     try {
       const res = await translate({ frames, model });
       setResult(res);

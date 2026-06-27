@@ -249,3 +249,305 @@ button {
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
+
+/* ── Immersive Glass Design System ──────────────────────────────── */
+:root {
+  --glass-bg: rgba(10, 10, 20, 0.48);
+  --glass-chip-bg: rgba(255, 255, 255, 0.13);
+  --glass-border: rgba(255, 255, 255, 0.2);
+  --glass-border-bright: rgba(255, 255, 255, 0.48);
+  --glass-blur: blur(24px) saturate(180%);
+  --glass-shadow: 0 8px 40px rgba(0, 0, 0, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.22);
+}
+
+@keyframes live-glow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.85); }
+  60%       { box-shadow: 0 0 0 6px rgba(34, 197, 94, 0); }
+}
+
+@keyframes scanning-bar {
+  0%   { transform: translateX(-100%); opacity: 0; }
+  20%  { opacity: 1; }
+  80%  { opacity: 1; }
+  100% { transform: translateX(500%); opacity: 0; }
+}
+
+/* Immersive shell — camera fills the viewport */
+.app-immersive {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  background: #000;
+}
+
+/* ── Top glass bar ── */
+.glass-top-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-5);
+  padding-top: max(var(--space-5), env(safe-area-inset-top, 0px));
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.6) 0%, transparent 100%);
+}
+
+.brand-glass {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.brand-mark-glass {
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+  color: #fff;
+  background: var(--glass-chip-bg);
+  border: 1px solid var(--glass-border-bright);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  box-shadow: var(--glass-shadow);
+}
+
+.brand-name-glass {
+  font-size: var(--font-size-base);
+  font-weight: 700;
+  color: #fff;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.55);
+  white-space: nowrap;
+}
+
+.top-controls-right {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+/* LIVE chip */
+.live-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-full);
+  background: var(--glass-chip-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  border-top-color: var(--glass-border-bright);
+  color: #fff;
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  white-space: nowrap;
+  box-shadow: var(--glass-shadow);
+}
+
+.live-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #22c55e;
+  flex-shrink: 0;
+  animation: live-glow 2s ease-in-out infinite;
+}
+
+.live-dot.offline {
+  background: #f59e0b;
+  animation: none;
+}
+
+/* Faster/brighter pulse when hands are actually detected */
+.live-dot.hands {
+  background: #4ade80;
+  animation: live-glow 0.7s ease-in-out infinite;
+}
+
+/* Generic glass chip / button */
+.glass-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-full);
+  background: var(--glass-chip-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  border-top-color: var(--glass-border-bright);
+  color: #fff;
+  font-family: var(--font-family);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background var(--transition), border-color var(--transition);
+  box-shadow: var(--glass-shadow);
+}
+
+.glass-chip:hover  { background: rgba(255, 255, 255, 0.22); border-color: rgba(255, 255, 255, 0.42); }
+.glass-chip:active { background: rgba(255, 255, 255, 0.3); }
+
+/* ── Bottom controls bar ── */
+.glass-bottom-bar {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-6) var(--space-5);
+  padding-bottom: max(var(--space-8), env(safe-area-inset-bottom, 0px));
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.65) 0%, transparent 100%);
+  pointer-events: none;
+}
+
+.glass-bottom-bar > * { pointer-events: auto; }
+
+/* Status pill */
+.status-glass-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-full);
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  border-top-color: var(--glass-border-bright);
+  color: #fff;
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  max-width: 90%;
+  text-align: center;
+  line-height: 1.4;
+  box-shadow: var(--glass-shadow);
+}
+
+/* ── Result / phrases glass panel ── */
+.result-glass-panel {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 20;
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  border-top-color: var(--glass-border-bright);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  padding: var(--space-3) var(--space-5) var(--space-6);
+  padding-bottom: max(var(--space-8), env(safe-area-inset-bottom, 0px));
+  box-shadow: 0 -8px 48px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+  transform: translateY(calc(100% + 2px));
+  transition: transform 360ms cubic-bezier(0.32, 0.72, 0, 1);
+  max-height: 75dvh;
+  overflow-y: auto;
+}
+
+.result-glass-panel.open {
+  transform: translateY(0);
+}
+
+/* On wider screens: floating centered card */
+@media (min-width: 680px) {
+  .result-glass-panel {
+    left: 50%;
+    right: auto;
+    width: min(580px, 92vw);
+    bottom: var(--space-10);
+    border-radius: var(--radius-lg);
+    border-bottom-color: var(--glass-border);
+    transform: translateX(-50%) translateY(calc(100% + 80px));
+  }
+  .result-glass-panel.open {
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+.glass-panel-handle {
+  width: 36px;
+  height: 4px;
+  border-radius: var(--radius-full);
+  background: rgba(255, 255, 255, 0.3);
+  margin: 0 auto var(--space-4);
+}
+
+/* Live mode: always visible (no slide-in needed) */
+.result-glass-panel.live {
+  transform: none;
+}
+
+@media (min-width: 680px) {
+  .result-glass-panel.live {
+    transform: translateX(-50%);
+    bottom: var(--space-8);
+  }
+}
+
+/* Scanning shimmer used by ResultCard during loading */
+.scanning-shimmer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 20%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.7), transparent);
+}
+
+/* Retry / action button inside glass panel */
+.glass-action-btn {
+  margin-top: var(--space-4);
+  width: 100%;
+  padding: var(--space-3);
+  border-radius: var(--radius-full);
+  border: 1px solid rgba(255, 255, 255, 0.38);
+  background: rgba(255, 255, 255, 0.14);
+  color: #fff;
+  font-family: var(--font-family);
+  font-size: var(--font-size-base);
+  font-weight: 700;
+  cursor: pointer;
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  transition: background var(--transition);
+}
+
+.glass-action-btn:hover  { background: rgba(255, 255, 255, 0.24); }
+.glass-action-btn:active { background: rgba(255, 255, 255, 0.34); }
+
+/* Camera error overlay */
+.glass-camera-error {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 15;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-6);
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  border-top-color: var(--glass-border-bright);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--glass-shadow);
+  text-align: center;
+  max-width: min(380px, 90vw);
+}
