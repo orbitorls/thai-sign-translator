@@ -397,6 +397,14 @@ button {
 .glass-chip:hover  { background: rgba(255, 255, 255, 0.22); border-color: rgba(255, 255, 255, 0.42); }
 .glass-chip:active { background: rgba(255, 255, 255, 0.3); }
 
+/* Persistent "on" state for toggle chips (e.g. landmark overlay). */
+.glass-chip.active {
+  background: rgba(37, 99, 235, 0.42);
+  border-color: var(--glass-border-bright);
+  box-shadow: var(--glass-shadow), 0 0 0 1px rgba(37, 99, 235, 0.5);
+}
+.glass-chip.active:hover { background: rgba(37, 99, 235, 0.55); }
+
 /* ── Bottom controls bar ── */
 .glass-bottom-bar {
   position: absolute;

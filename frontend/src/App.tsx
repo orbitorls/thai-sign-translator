@@ -15,7 +15,8 @@ const MIN_TOTAL_FRAMES = 8;
 
 function Translator() {
   const { models, selectedModelId, loading: modelsLoading, error: modelsError, setSelectedModelId } = useModels();
-  const capture = useHolisticCapture();
+  const [showLandmarks, setShowLandmarks] = useState(false);
+  const capture = useHolisticCapture({ overlayEnabled: showLandmarks });
   const translator = useTranslate();
   const selectedModel = models.find((m) => m.id === selectedModelId);
   const [phrasesOpen, setPhrasesOpen] = useState(false);
@@ -90,7 +91,7 @@ function Translator() {
   return (
     <main className="app-immersive">
       {/* Full-screen camera background */}
-      <CameraView videoRef={capture.videoRef} />
+      <CameraView videoRef={capture.videoRef} overlayRef={capture.overlayRef} />
 
       {/* ── Top glass bar ── */}
       <div className="glass-top-bar">
@@ -118,6 +119,15 @@ function Translator() {
               {selectedModel.label_th}
             </span>
           )}
+
+          <button
+            className={`glass-chip${showLandmarks ? " active" : ""}`}
+            onClick={() => setShowLandmarks((v) => !v)}
+            aria-pressed={showLandmarks}
+            title="แสดง/ซ่อนเส้นโครงร่าง MediaPipe Holistic"
+          >
+            ✦ เส้นโครงร่าง
+          </button>
 
           <button
             className="glass-chip"

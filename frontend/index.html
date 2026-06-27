@@ -4,13 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Thai Sign Translator | แปลภาษามือไทย</title>
-  <!-- MediaPipe Holistic (CDN — do not bundle; pinned versions with SRI) -->
-  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/holistic@0.5.1675471629/holistic.js"
-          integrity="sha384-uPgv3xhUPhBy7PuniMrm0xGTB8Wme5XMJWg98sFaqvxMAbPeOSa2De2R46nuG8Sw"
-          crossorigin="anonymous"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils@0.3.1675466862/camera_utils.js"
-          integrity="sha384-q1KhAZhJcJXr3zfC3Tz07pBqQSabwFIZhXlmlUAB8s0zk4ETWERkIKGBCFQ5Jc3e"
-          crossorigin="anonymous"></script>
+  <!-- MediaPipe Holistic now loaded via @mediapipe/tasks-vision (bundled);
+       the WASM runtime + model load from CDN inside useHolisticCapture. -->
 </head>
 <body>
   <div id="root"></div>

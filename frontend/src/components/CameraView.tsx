@@ -2,9 +2,10 @@ import React from "react";
 
 interface CameraViewProps {
   videoRef: React.RefObject<HTMLVideoElement>;
+  overlayRef?: React.RefObject<HTMLCanvasElement>;
 }
 
-export function CameraView({ videoRef }: CameraViewProps) {
+export function CameraView({ videoRef, overlayRef }: CameraViewProps) {
   return (
     <div style={{ position: "absolute", inset: 0, background: "#000", overflow: "hidden" }}>
       <video
@@ -18,6 +19,21 @@ export function CameraView({ videoRef }: CameraViewProps) {
           objectFit: "cover",
           transform: "scaleX(-1)",
           display: "block",
+        }}
+      />
+
+      {/* Landmark skeleton overlay — same mirror + cover so it aligns with the video. */}
+      <canvas
+        ref={overlayRef}
+        aria-hidden="true"
+        style={{
+          position: "absolute",
+          inset: 0,
+          width: "100%",
+          height: "100%",
+          objectFit: "cover",
+          transform: "scaleX(-1)",
+          pointerEvents: "none",
         }}
       />
 
