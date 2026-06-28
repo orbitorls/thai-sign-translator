@@ -120,11 +120,12 @@ function AppShell() {
   }, [translator.status]);
 
   // Auto-reset error after 3 s so the loop can continue.
+  // Network errors are NOT auto-reset — they persist until the user retries (spec §8).
   useEffect(() => {
-    if (translator.status !== "error") return;
+    if (translator.status !== "error" || translator.errorKind === "network") return;
     const id = setTimeout(() => translatorRef.current.reset(), 3000);
     return () => clearTimeout(id);
-  }, [translator.status]);
+  }, [translator.status, translator.errorKind]);
 
   const hasCameraError = Boolean(capture.cameraError);
   const resultStatus =

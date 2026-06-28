@@ -60,6 +60,9 @@ export function HistoryScreen() {
           {items.map((it) => (
             <li key={it.id} className="history-row">
               <button type="button" className="history-word-btn" onClick={() => speak(it.sentence)}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ width: 18, height: 18, flexShrink: 0, marginRight: 8, opacity: 0.6 }}>
+                  <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
+                </svg>
                 <div className="history-word">
                   <b>{it.sentence}</b>
                   <small>{formatRelative(it.ts, th, lang)}</small>
