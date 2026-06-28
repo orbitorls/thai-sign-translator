@@ -101,6 +101,8 @@ export interface HolisticCaptureState {
   start: () => void;
   /** Returns frames and hand-frame-count for the window just stopped. */
   stop: () => StopResult;
+  pause: () => void;
+  resume: () => void;
 }
 
 export interface HolisticCaptureOptions {
@@ -171,6 +173,7 @@ export function useHolisticCapture(
   // Ref-gated so toggling the overlay never re-inits MediaPipe.
   const overlayEnabledRef = useRef(Boolean(options.overlayEnabled));
   overlayEnabledRef.current = Boolean(options.overlayEnabled);
+  const pausedRef = useRef(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -218,6 +221,7 @@ export function useHolisticCapture(
 
       const video = videoRef.current;
       if (!landmarker || !video || video.readyState < 2) return;
+      if (pausedRef.current) return; // paused: keep a light rAF tick, skip detection
 
       // detectForVideo requires strictly increasing timestamps (ms).
       let ts = performance.now();
@@ -276,5 +280,15 @@ export function useHolisticCapture(
     };
   }
 
-  return { videoRef, overlayRef, ready, recording, handsPresent, cameraError, start, stop };
+  function pause() {
+    pausedRef.current = true;
+    videoRef.current?.pause();
+  }
+
+  function resume() {
+    pausedRef.current = false;
+    videoRef.current?.play().catch(() => {});
+  }
+
+  return { videoRef, overlayRef, ready, recording, handsPresent, cameraError, start, stop, pause, resume };
 }

@@ -44,6 +44,19 @@ function AppShell() {
 
   const captureRef = useRef(capture);
   captureRef.current = capture;
+
+  // Pause MediaPipe when the tab is backgrounded or the user is not on the camera screen.
+  useEffect(() => {
+    const apply = () => {
+      const shouldRun = !document.hidden && screen === "camera";
+      if (shouldRun) captureRef.current.resume();
+      else captureRef.current.pause();
+    };
+    apply();
+    document.addEventListener("visibilitychange", apply);
+    return () => document.removeEventListener("visibilitychange", apply);
+  }, [screen, capture.ready]);
+
   const translatorRef = useRef(translator);
   translatorRef.current = translator;
   const selectedModelIdRef = useRef(selectedModelId);
