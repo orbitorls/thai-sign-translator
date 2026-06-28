@@ -4,6 +4,7 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { translate, translateRealtime, closeRealtimeSocket, TranslateResult, ApiError } from "../api/client";
 import { createMockTranslateResult, MOCKUP_MODE } from "../mockup";
+import { useI18n } from "../i18n";
 
 export type TranslateStatus = "idle" | "loading" | "success" | "error";
 
@@ -36,6 +37,7 @@ export interface TranslateState {
 }
 
 export function useTranslate(): TranslateState {
+  const t = useI18n();
   const [status, setStatus] = useState<TranslateStatus>("idle");
   const [result, setResult] = useState<TranslateResult | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -105,7 +107,7 @@ export function useTranslate(): TranslateState {
         setError(e.detail);
         setErrorStatus(e.status);
       } else {
-        setError("เกิดข้อผิดพลาดที่ไม่คาดคิด");
+        setError(t.unexpectedError);
         setErrorStatus(null);
       }
       setStatus("error");
@@ -115,7 +117,7 @@ export function useTranslate(): TranslateState {
         setPending(false);
       }
     }
-  }, []);
+  }, [t]);
 
   const cancel = useCallback((options?: { keepResult?: boolean }) => {
     requestIdRef.current += 1;
