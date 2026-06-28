@@ -695,3 +695,13 @@ button {
 .toggle.on::after { left: 23px; }
 
 .offline-chip { background: rgba(220,38,38,0.35); border-color: rgba(255,255,255,0.4); }
+
+/* ── Haptic + visual flash feedback ── */
+@keyframes feedback-fade { 0% { opacity: 0.55; } 100% { opacity: 0; } }
+.feedback-flash {
+  position: absolute; inset: 0; z-index: 45; pointer-events: none;
+  animation: feedback-fade 600ms ease-out forwards;
+}
+.feedback-flash.success { box-shadow: inset 0 0 0 4px rgba(34,197,94,0.9); }
+.feedback-flash.error   { box-shadow: inset 0 0 0 4px rgba(239,68,68,0.9); }
+@media (prefers-reduced-motion: reduce) { .feedback-flash { animation-duration: 1ms; } }

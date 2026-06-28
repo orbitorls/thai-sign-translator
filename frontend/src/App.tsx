@@ -5,6 +5,7 @@ import { SettingsProvider, useSettings } from "./hooks/SettingsProvider";
 import { HistoryProvider, useHistory } from "./hooks/HistoryProvider";
 import { useHolisticCapture } from "./hooks/useHolisticCapture";
 import { useTranslate, ErrorKind } from "./hooks/useTranslate";
+import { useFeedback } from "./hooks/useFeedback";
 import { useI18n } from "./i18n";
 import { CameraView } from "./components/CameraView";
 import { ResultCard } from "./components/ResultCard";
@@ -25,6 +26,8 @@ function AppShell() {
   const history = useHistory();
   const capture = useHolisticCapture({ overlayEnabled: showLandmarks });
   const translator = useTranslate();
+  const feedback = useFeedback();
+  const feedbackRef = useRef(feedback); feedbackRef.current = feedback;
   const selectedModel = models.find((m) => m.id === selectedModelId);
 
   const [screen, setScreen] = useState<Screen>("camera");
@@ -92,9 +95,15 @@ function AppShell() {
           score: translator.result.score,
           model: translator.result.model,
         });
+        feedbackRef.current.signal("success");
       }
     }
   }, [translator.status, translator.result]);
+
+  // Signal haptic + visual flash on error.
+  useEffect(() => {
+    if (translator.status === "error") feedbackRef.current.signal("error");
+  }, [translator.status]);
 
   // Auto-reset error after 3 s so the loop can continue.
   useEffect(() => {
@@ -113,6 +122,7 @@ function AppShell() {
 
   return (
     <main className="app-immersive">
+      {feedback.flash && <div className={`feedback-flash ${feedback.flash}`} aria-hidden="true" />}
       {/* Full-screen camera background — stays mounted across tabs */}
       <CameraView videoRef={capture.videoRef} overlayRef={capture.overlayRef} />
 
