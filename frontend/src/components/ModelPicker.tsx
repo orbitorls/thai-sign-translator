@@ -16,6 +16,7 @@ export function ModelPicker({ className }: ModelPickerProps) {
         className={className ?? "glass-chip model-picker-select"}
         aria-label={th.modelLoading}
         aria-busy="true"
+        aria-disabled="true"
         style={{ opacity: 0.6, cursor: "default", userSelect: "none" }}
       >
         {th.modelLoading}
@@ -28,9 +29,10 @@ export function ModelPicker({ className }: ModelPickerProps) {
       <span
         className={className ?? "glass-chip model-picker-select"}
         aria-label={th.modelLoadError}
+        aria-disabled="true"
         style={{ cursor: "default", userSelect: "none" }}
       >
-        <span className="glass-text-warn">{th.modelLoadError}</span>
+        <span className="glass-text-warn" aria-hidden="true">{th.modelLoadError}</span>
       </span>
     );
   }

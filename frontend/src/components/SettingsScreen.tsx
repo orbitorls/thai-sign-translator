@@ -28,6 +28,7 @@ export function SettingsScreen({ onOpenPrivacy }: SettingsScreenProps) {
   const { hasScope, setScope } = useConsent();
   const [view, setView] = useState<"main" | "privacy">("main");
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [resetConfirmOpen, setResetConfirmOpen] = useState(false);
 
   if (view === "privacy") {
     return <PrivacyScreen onBack={() => setView("main")} />;
@@ -183,7 +184,7 @@ export function SettingsScreen({ onOpenPrivacy }: SettingsScreenProps) {
           <span className="settings-label">{t.settingsClearHistory}</span>
         </button>
 
-        <button type="button" className="settings-row settings-action settings-action--muted" onClick={reset}>
+        <button type="button" className="settings-row settings-action settings-action--muted" onClick={() => setResetConfirmOpen(true)}>
           <span className="settings-label">{t.resetToDefaults}</span>
         </button>
       </div>
@@ -194,6 +195,15 @@ export function SettingsScreen({ onOpenPrivacy }: SettingsScreenProps) {
         message={t.confirmClear}
         onConfirm={() => { clear(); setConfirmOpen(false); }}
         onCancel={() => setConfirmOpen(false)}
+        danger
+      />
+
+      <ConfirmModal
+        open={resetConfirmOpen}
+        title={t.resetToDefaults}
+        message={t.confirmClear}
+        onConfirm={() => { reset(); setResetConfirmOpen(false); }}
+        onCancel={() => setResetConfirmOpen(false)}
         danger
       />
     </div>
