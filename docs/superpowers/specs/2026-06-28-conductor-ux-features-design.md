@@ -1,7 +1,7 @@
 # Design Spec — วาทยากร (Conductor) UX/UI v2
 
 วันที่: 2026-06-28
-สถานะ: รออนุมัติจากผู้ใช้ก่อนทำ implementation plan
+สถานะ: อนุมัติแล้ว — ขอบเขตงานปัจจุบัน **P1 เท่านั้น** (favorites ตัดออก), พร้อมทำ implementation plan
 ขอบเขต: เฉพาะ frontend (`frontend/`) — ไม่แตะ backend/ML
 
 ---
@@ -73,7 +73,6 @@
 - การกระทำ:
   - แตะการ์ด → อ่านออกเสียงคำนั้นซ้ำ (ใช้ `useSpeech`)
   - ปุ่มล้างทั้งหมด (trash) — มีการยืนยันสั้น ๆ
-  - (P2/ทางเลือก) ดาว ⭐ ปักคำโปรด → ปักไว้บนสุด
 - Empty state: ไอคอน + คำสั้น ("ยังไม่มีประวัติ")
 - เก็บใน **localStorage** (ไม่มี backend)
 
@@ -85,11 +84,10 @@ interface HistoryItem {
   score: number;
   model: string;
   ts: number;        // Date.now()
-  favorite: boolean; // default false (P2 ใช้งานจริง)
 }
 ```
 - localStorage key: `tsl.history.v1`
-- **Cap 100 รายการล่าสุด** — เมื่อเกิน ตัดรายการเก่าสุดที่ไม่ใช่ favorite ออกก่อน (favorite ไม่ถูกตัดอัตโนมัติ)
+- **Cap 100 รายการล่าสุด** — เมื่อเกิน ตัดรายการเก่าสุดออก
 - **Dedup**: ไม่บันทึกถ้า `sentence` ตรงกับรายการล่าสุด และห่างกัน < 30 วินาที (กันคำซ้ำจากลูปอัตโนมัติ)
 
 ---
@@ -148,7 +146,7 @@ interface Settings {
 ```
 ModelsProvider
   └ SettingsProvider        (ใหม่: lang/overlay/autoSpeak + persist localStorage)
-      └ HistoryProvider     (ใหม่: list + add/clear/toggleFavorite + persist localStorage)
+      └ HistoryProvider     (ใหม่: list + add/clear + persist localStorage)
           └ AppShell        (state screen + bottom nav + overlays)
 ```
 
@@ -190,10 +188,12 @@ ModelsProvider
 - ตั้งค่า: สลับภาษา ไทย/EN (i18n) + ย้าย toggle เส้นโครงร่างมาที่นี่ + ล้างประวัติ
 - เปลี่ยนแบรนด์เป็น "วาทยากร"
 
-**P2 — ขัดเกลา + ความทนทาน:**
-- autoSpeak, ดาวคำโปรด (favorites), แตะการ์ดประวัติเพื่ออ่านซ้ำ, เวลาแบบสัมพัทธ์ที่ละเอียดขึ้น
+**P2 — ขัดเกลา + ความทนทาน (เลื่อนไปภายหลัง — ไม่อยู่ในงานรอบนี้):**
+- autoSpeak (อ่านออกเสียงอัตโนมัติเมื่อมีผลแปลใหม่), เวลาแบบสัมพัทธ์ที่ละเอียดขึ้น
 - ชุดเทสต์ Vitest (ดูข้อ 13)
 - ขัดเกลา empty state / reduced-motion
+
+> **ขอบเขตงานรอบนี้ = P1 เท่านั้น** (ผู้ใช้ยืนยัน) — favorites ถูกตัดออกถาวร (ดูข้อ 12)
 
 ---
 
@@ -203,6 +203,7 @@ ModelsProvider
 - cloud/AI TTS คุณภาพสูง (ใช้ browser TTS ก่อน)
 - backend/บัญชีผู้ใช้/sync ข้ามอุปกรณ์ (ประวัติเก็บ localStorage เครื่องเดียว)
 - โหมดขยายผลแปลเต็มจอ (ตัดออกตามที่ผู้ใช้ระบุ)
+- **ดาวคำโปรด / ปักคำ (favorites)** — ตัดออกตามที่ผู้ใช้ระบุ (ประวัติเรียงตามเวลาอย่างเดียว ไม่มี field `favorite`)
 
 ---
 
