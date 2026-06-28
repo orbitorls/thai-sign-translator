@@ -693,3 +693,5 @@ button {
   border-radius: 50%; background: #fff; transition: left var(--transition);
 }
 .toggle.on::after { left: 23px; }
+
+.offline-chip { background: rgba(220,38,38,0.35); border-color: rgba(255,255,255,0.4); }

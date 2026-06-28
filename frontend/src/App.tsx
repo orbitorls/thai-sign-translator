@@ -4,7 +4,7 @@ import { ModelsProvider, useModels } from "./hooks/ModelsProvider";
 import { SettingsProvider, useSettings } from "./hooks/SettingsProvider";
 import { HistoryProvider, useHistory } from "./hooks/HistoryProvider";
 import { useHolisticCapture } from "./hooks/useHolisticCapture";
-import { useTranslate } from "./hooks/useTranslate";
+import { useTranslate, ErrorKind } from "./hooks/useTranslate";
 import { useI18n } from "./i18n";
 import { CameraView } from "./components/CameraView";
 import { ResultCard } from "./components/ResultCard";
@@ -30,6 +30,14 @@ function AppShell() {
   const [screen, setScreen] = useState<Screen>("camera");
   const [phrasesOpen, setPhrasesOpen] = useState(false);
   const [displayedResult, setDisplayedResult] = useState<TranslateResult | null>(null);
+  const [online, setOnline] = useState(typeof navigator === "undefined" ? true : navigator.onLine);
+  useEffect(() => {
+    const up = () => setOnline(true);
+    const down = () => setOnline(false);
+    window.addEventListener("online", up);
+    window.addEventListener("offline", down);
+    return () => { window.removeEventListener("online", up); window.removeEventListener("offline", down); };
+  }, []);
 
   const captureRef = useRef(capture);
   captureRef.current = capture;
@@ -135,6 +143,8 @@ function AppShell() {
             </span>
           )}
 
+          {!online && <span className="glass-chip offline-chip">⚠ {th.offline}</span>}
+
           <button className="glass-chip" onClick={() => setPhrasesOpen((v) => !v)} aria-expanded={phrasesOpen}>
             {th.supportedPhrasesTitle}
           </button>
@@ -161,6 +171,8 @@ function AppShell() {
             hasResult={Boolean(displayedResult)}
             hasError={translator.status === "error"}
             modelsError={modelsError}
+            online={online}
+            errorKind={translator.errorKind}
           />
           <ResultCard
             status={resultStatus}
@@ -169,6 +181,9 @@ function AppShell() {
             errorStatus={translator.errorStatus}
             variant="glass"
           />
+          {translator.status === "error" && translator.errorKind === "network" && (
+            <button className="glass-action-btn" onClick={() => translatorRef.current.reset()}>{th.retry}</button>
+          )}
         </div>
       )}
 
@@ -209,9 +224,11 @@ interface LiveStatusRowProps {
   hasResult: boolean;
   hasError: boolean;
   modelsError: string | null;
+  online: boolean;
+  errorKind: ErrorKind;
 }
 
-function LiveStatusRow({ cameraReady, translating, hasResult, hasError, modelsError }: LiveStatusRowProps) {
+function LiveStatusRow({ cameraReady, translating, hasResult, hasError, modelsError, online, errorKind }: LiveStatusRowProps) {
   const th = useI18n();
   let label = "";
   let color = "rgba(255,255,255,0.5)";
@@ -221,6 +238,9 @@ function LiveStatusRow({ cameraReady, translating, hasResult, hasError, modelsEr
   } else if (modelsError) {
     label = th.modelLoadError;
     color = "#fcd34d";
+  } else if (!online || errorKind === "network") {
+    label = th.offlineHint;
+    color = "#fca5a5";
   } else if (hasError) {
     label = "";
   } else if (translating) {

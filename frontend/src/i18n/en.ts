@@ -66,6 +66,11 @@ export const en: typeof th = {
   settingsClearHistory: "Clear history",
   confirmClear: "Clear all history?",
 
+  // Network / offline
+  offline: "Offline",
+  offlineHint: "No internet connection",
+  retry: "Retry",
+
   // Misc actions
   close: "Close",
 

@@ -70,6 +70,11 @@ export const th = {
   settingsClearHistory: "ล้างประวัติ",
   confirmClear: "ล้างประวัติทั้งหมด?",
 
+  // Network / offline
+  offline: "ออฟไลน์",
+  offlineHint: "ไม่มีการเชื่อมต่ออินเทอร์เน็ต",
+  retry: "ลองใหม่",
+
   // Misc actions
   close: "ปิด",
 
