@@ -15,14 +15,24 @@ export function useFocusTrap(
   initialFocus: "first" | "container" = "first"
 ): void {
   const savedFocusRef = useRef<Element | null>(null);
+  // Guard: save focus only once per activation (prevents overwrite when
+  // onEscape reference changes while the trap is open, e.g. service toggle
+  // in ConsentModal).
+  const hasSavedRef = useRef(false);
 
   useEffect(() => {
-    if (!active) return;
+    if (!active) {
+      hasSavedRef.current = false;
+      return;
+    }
     const container = containerRef.current;
     if (!container) return;
 
-    // Save current focus
-    savedFocusRef.current = document.activeElement;
+    // Save current focus only on first activation
+    if (!hasSavedRef.current) {
+      savedFocusRef.current = document.activeElement;
+      hasSavedRef.current = true;
+    }
 
     // Move focus into dialog
     if (initialFocus === "first") {
