@@ -27,6 +27,7 @@ export function useSpeech(): SpeechController {
     (text: string, lang = "th-TH") => {
       if (!supported || !text) return;
       window.speechSynthesis.cancel();
+      setSpeaking(true);
       const u = new SpeechSynthesisUtterance(text);
       u.lang = lang;
       const base = lang.split("-")[0];
