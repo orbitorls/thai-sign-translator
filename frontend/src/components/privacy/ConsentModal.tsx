@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { useCallback, useRef, useState } from "react";
 import { useT } from "../../i18n";
 import { Toggle } from "../settings/Toggle";
 import type { ConsentScope } from "../../privacy/consentStorage";
@@ -29,7 +29,8 @@ export function ConsentModal({ open, onClose, onAccept, onOpenPrivacy }: Consent
 
   // Block Esc when service consent is not yet granted (mandatory gate).
   // Once service is accepted the user may press Esc to dismiss.
-  const escapeHandler = service ? () => onClose() : undefined;
+  const stableClose = useCallback(() => onClose(), [onClose]);
+  const escapeHandler = service ? stableClose : undefined;
   useFocusTrap(dialogRef, open, escapeHandler, "first");
 
   if (!open) return null;
@@ -175,7 +176,7 @@ export function ConsentModal({ open, onClose, onAccept, onOpenPrivacy }: Consent
             disabled={submitting}
             className="glass-button-primary"
             style={{
-              flex: 1,
+              width: "100%",
               minHeight: 44,
               padding: "var(--space-3) var(--space-6)",
               borderRadius: "var(--radius-md)",
@@ -195,7 +196,7 @@ export function ConsentModal({ open, onClose, onAccept, onOpenPrivacy }: Consent
             }}
             className="glass-button"
             style={{
-              flex: 1,
+              width: "100%",
               minHeight: 44,
               padding: "var(--space-3) var(--space-6)",
               borderRadius: "var(--radius-md)",
