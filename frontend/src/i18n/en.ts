@@ -37,6 +37,13 @@ export const en = {
   cameraError: "Camera not accessible",
   cameraErrorHint: "Please allow camera access in your browser",
   cameraRetry: "Retry",
+  cameraDenied: "Camera access denied — please allow camera permission in your browser and refresh",
+  cameraNotFound: "No camera found — please connect a camera before using the app",
+  cameraBusy: "Camera is in use by another app — please close it first",
+  cameraConsentRequired: "Translation consent required to use the camera",
+  openConsentSettings: "Open Consent Settings",
+  mediaPipeLoading: "Loading hand-detection model (may take a moment on first use)...",
+  mediaPipeSlowNetwork: "Slow load — please check your internet connection",
   cameraRegionLabel: "Sign language camera viewfinder",
   cameraSectionLabel: "Camera and recording controls",
   viewfinderHint: "Position your upper body and hands inside the frame",
@@ -66,6 +73,7 @@ export const en = {
   warningLowConfidence: "Low confidence — try signing again more clearly",
   warningLowLight: "Lighting is too low — move to a brighter area",
   warningNoHands: "Hands not detected — raise both hands into the frame",
+  warningPartialOcclusion: "Hands partially out of frame — raise both hands fully into view",
   noFrames: "No movement detected. Try recording again.",
   detectedText: "Detected Text",
   speakAloud: "Speak Aloud",
@@ -73,6 +81,7 @@ export const en = {
   textToSignPlaceholder: "Type here to see sign animation...",
   clearHistory: "Clear History",
   saveTranslation: "Save Translation",
+  translationPaused: "Translation paused — fix the issue above to resume automatically",
 
   // Model picker
   modelLabel: "Model",
@@ -83,6 +92,7 @@ export const en = {
   // Errors
   errorModelUnavailable: "This model is not available yet",
   errorGeneric: "An error occurred. Please try again.",
+  unexpectedError: "An unexpected error occurred",
   comingSoon: "Coming soon",
 
   // Supported phrases panel

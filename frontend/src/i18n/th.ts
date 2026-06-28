@@ -37,6 +37,13 @@ export const th = {
   cameraError: "ไม่สามารถเข้าถึงกล้องได้",
   cameraErrorHint: "กรุณาอนุญาตการใช้กล้องในเบราว์เซอร์",
   cameraRetry: "ลองใหม่",
+  cameraDenied: "ไม่ได้รับอนุญาตให้ใช้กล้อง กรุณาอนุญาตในเบราว์เซอร์แล้วรีเฟรช",
+  cameraNotFound: "ไม่พบกล้อง กรุณาเชื่อมต่ออุปกรณ์กล้องก่อนใช้งาน",
+  cameraBusy: "กล้องถูกใช้งานโดยแอปอื่น กรุณาปิดแอปนั้นก่อน",
+  cameraConsentRequired: "ต้องยินยอมการใช้บริการแปลก่อนใช้งานกล้อง",
+  openConsentSettings: "เปิดตั้งค่าความยินยอม",
+  mediaPipeLoading: "กำลังโหลดระบบตรวจจับมือ (อาจใช้เวลาสักครู่...)",
+  mediaPipeSlowNetwork: "โหลดล่าช้า กรุณาตรวจสอบการเชื่อมต่ออินเทอร์เน็ต",
   cameraRegionLabel: "กล้องแปลภาษามือ",
   cameraSectionLabel: "กล้องและปุ่มบันทึก",
   viewfinderHint: "จัดตำแหน่งลำตัวและมือให้อยู่ในกรอบ",
@@ -66,6 +73,7 @@ export const th = {
   warningLowConfidence: "ความมั่นใจต่ำ — ลองทำท่าใหม่ให้ชัดเจนขึ้น",
   warningLowLight: "แสงน้อยเกินไป — ย้ายไปที่สว่างขึ้น",
   warningNoHands: "ไม่พบมือ — ยกมือทั้งสองข้างเข้าเฟรม",
+  warningPartialOcclusion: "มือบางส่วนอยู่นอกเฟรม — ยกมือให้อยู่ในเฟรมครบ",
   noFrames: "ไม่พบการเคลื่อนไหว ลองเริ่มบันทึกใหม่",
   detectedText: "ข้อความที่ตรวจจับได้",
   speakAloud: "พูดออกเสียง",
@@ -73,6 +81,7 @@ export const th = {
   textToSignPlaceholder: "พิมพ์ที่นี่เพื่อดูแอนิเมชันภาษามือ...",
   clearHistory: "ล้างประวัติ",
   saveTranslation: "บันทึกผลลัพธ์",
+  translationPaused: "หยุดแปลชั่วคราว — แก้ไขปัญหาแล้วจะเริ่มใหม่อัตโนมัติ",
 
   // Model picker
   modelLabel: "โมเดล",
@@ -83,6 +92,7 @@ export const th = {
   // Errors
   errorModelUnavailable: "โมเดลนี้ยังไม่พร้อมใช้งาน",
   errorGeneric: "เกิดข้อผิดพลาด กรุณาลองใหม่",
+  unexpectedError: "เกิดข้อผิดพลาดที่ไม่คาดคิด",
   comingSoon: "ฟีเจอร์นี้จะมาเร็วๆ นี้",
 
   // Supported phrases panel
