@@ -1080,8 +1080,101 @@ button {
 .glass-button:hover { background: rgba(255, 255, 255, 0.85); }
 .glass-button:active { transform: scale(0.98); }
 
-/* Native select inside glass chip */
-.model-picker-select,
+/* ── Custom model picker dropdown ── */
+.model-picker-wrap { display: inline-block; position: relative; }
+
+.model-picker-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-2) var(--space-1) var(--space-3);
+}
+.model-picker-btn.open {
+  background: rgba(255, 255, 255, 0.22);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+.model-picker-label {
+  white-space: nowrap;
+  max-width: 9rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+}
+
+.model-picker-chevron {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  opacity: 0.75;
+  transition: transform var(--dur-fast) var(--ease-out), opacity var(--dur-fast);
+}
+.model-picker-btn.open .model-picker-chevron {
+  transform: rotate(180deg);
+  opacity: 1;
+}
+
+.model-picker-panel {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  min-width: 200px;
+  z-index: 55;
+  background: rgba(10, 12, 28, 0.88);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-top-color: rgba(255, 255, 255, 0.36);
+  border-radius: var(--radius-md);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  overflow: hidden;
+  animation: scale-in var(--dur-fast) var(--ease-spring) both;
+  transform-origin: top right;
+}
+
+.model-picker-option {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  background: none;
+  border: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.82);
+  font-family: var(--font-family);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+  transition: background var(--dur-fast) var(--ease-out);
+}
+.model-picker-option:last-child { border-bottom: none; }
+.model-picker-option:hover:not(:disabled) { background: rgba(255, 255, 255, 0.1); }
+.model-picker-option:active:not(:disabled) { background: rgba(255, 255, 255, 0.15); }
+.model-picker-option.selected {
+  color: #fff;
+  background: rgba(37, 99, 235, 0.32);
+}
+.model-picker-option.selected:hover { background: rgba(37, 99, 235, 0.46); }
+.model-picker-option.unavailable { opacity: 0.4; cursor: default; }
+
+.model-picker-option-check {
+  width: 16px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+}
+.model-picker-check { width: 14px; height: 14px; color: var(--glass-success); }
+.model-picker-option-label { flex: 1; min-width: 0; }
+.model-picker-unavail {
+  font-size: var(--font-size-xs);
+  opacity: 0.55;
+  white-space: nowrap;
+}
+
+/* Native select inside glass chip (used in settings overlays) */
 select.glass-chip {
   appearance: none;
   -webkit-appearance: none;
@@ -1098,12 +1191,7 @@ select.glass-chip {
   background-repeat: no-repeat;
   background-position: right 0.35rem center;
 }
-
-.model-picker-select option,
-select.glass-chip option {
-  color: #121c2a;
-  background: #fff;
-}
+select.glass-chip option { color: #121c2a; background: #fff; }
 
 /* Settings overlay select (legacy chip style — not settings-select) */
 .screen-overlay select.glass-chip:not(.settings-select) {
