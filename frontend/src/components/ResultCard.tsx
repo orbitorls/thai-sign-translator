@@ -141,8 +141,10 @@ export function ResultCard({
         <>
           {/* Change 1b: aria-live scoped to sentence only */}
           <p
+            key={result.sentence}
             aria-live="polite"
             aria-atomic="true"
+            className="result-sentence"
             style={{ fontSize: "var(--font-size-3xl)", fontWeight: 700, color: textColor, lineHeight: 1.4, wordBreak: "break-word" }}
           >
             {result.sentence || th.resultPlaceholder}

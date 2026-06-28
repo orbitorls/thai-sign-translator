@@ -6,6 +6,7 @@ import { HistoryProvider, useHistory } from "./hooks/HistoryProvider";
 import { useHolisticCapture, type QualityWarning } from "./hooks/useHolisticCapture";
 import { useTranslate } from "./hooks/useTranslate";
 import { useConsent } from "./hooks/useConsent";
+import { useMountTransition } from "./hooks/useMountTransition";
 import { useI18n } from "./i18n";
 import { CameraView } from "./components/CameraView";
 import { ResultCard } from "./components/ResultCard";
@@ -67,6 +68,14 @@ function AppShell() {
     startedAt: number;
   } | null>(null);
   const [hardBlocked, setHardBlocked] = useState(false);
+
+  // Mount-transition hooks for exit animations
+  const historyT    = useMountTransition(screen === "history");
+  const settingsT   = useMountTransition(screen === "settings");
+  const teachT      = useMountTransition(screen === "teach");
+  const dictT       = useMountTransition(screen === "dictionary");
+  const phrasesT    = useMountTransition(phrasesOpen, 360);
+  const consentT    = useMountTransition(showConsent);
 
   const pendingRef = useRef(false);
   const lastSavedRef = useRef("");
@@ -300,30 +309,30 @@ function AppShell() {
         </div>
       )}
 
-      {screen === "history" && (
-        <div className="screen-overlay">
+      {historyT.mounted && (
+        <div className={`screen-overlay${historyT.closing ? " is-closing" : ""}`}>
           <HistoryScreen />
         </div>
       )}
-      {screen === "settings" && (
-        <div className="screen-overlay">
+      {settingsT.mounted && (
+        <div className={`screen-overlay${settingsT.closing ? " is-closing" : ""}`}>
           <SettingsScreen />
         </div>
       )}
-      {screen === "teach" && (
-        <div className="screen-overlay">
+      {teachT.mounted && (
+        <div className={`screen-overlay${teachT.closing ? " is-closing" : ""}`}>
           <TeachScreen capture={capture} />
         </div>
       )}
-      {screen === "dictionary" && (
-        <div className="screen-overlay">
+      {dictT.mounted && (
+        <div className={`screen-overlay${dictT.closing ? " is-closing" : ""}`}>
           <DictionaryScreen />
         </div>
       )}
 
-      {screen === "camera" && phrasesOpen && (
+      {screen === "camera" && phrasesT.mounted && (
         <div
-          className="result-glass-panel open"
+          className={`result-glass-panel${phrasesT.closing ? "" : " open"}`}
           style={{ zIndex: 30 }}
           role="dialog"
           aria-modal="true"
@@ -355,15 +364,18 @@ function AppShell() {
         }}
       />
 
-      <ConsentModal
-        open={showConsent}
-        onClose={() => setShowConsent(false)}
-        onAccept={completeModal}
-        onOpenPrivacy={() => {
-          setShowConsent(false);
-          setScreen("settings");
-        }}
-      />
+      {consentT.mounted && (
+        <ConsentModal
+          open={true}
+          closing={consentT.closing}
+          onClose={() => setShowConsent(false)}
+          onAccept={completeModal}
+          onOpenPrivacy={() => {
+            setShowConsent(false);
+            setScreen("settings");
+          }}
+        />
+      )}
     </main>
   );
 }

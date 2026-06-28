@@ -41,7 +41,7 @@ export function ConfirmModal({
 
   return (
     <div
-      className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
+      className="glass-modal-backdrop fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
     >
       <div
         ref={dialogRef}
@@ -49,7 +49,7 @@ export function ConfirmModal({
         role="dialog"
         aria-modal="true"
         aria-labelledby="confirm-modal-title"
-        className="glass-card-strong rounded-2xl max-w-sm w-full p-6 outline-none"
+        className="glass-card-strong glass-modal-card rounded-2xl max-w-sm w-full p-6 outline-none"
       >
         <h2
           id="confirm-modal-title"

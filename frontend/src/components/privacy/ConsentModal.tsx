@@ -6,6 +6,7 @@ import { useFocusTrap } from "../../hooks/useFocusTrap";
 
 interface ConsentModalProps {
   open: boolean;
+  closing?: boolean;
   onClose: () => void;
   onAccept: (scopes: Partial<Record<ConsentScope, boolean>>) => Promise<void>;
   onOpenPrivacy?: () => void;
@@ -17,7 +18,7 @@ const OPTIONAL_SCOPES: ConsentScope[] = [
   "academic_publication",
 ];
 
-export function ConsentModal({ open, onClose, onAccept, onOpenPrivacy }: ConsentModalProps) {
+export function ConsentModal({ open, closing, onClose, onAccept, onOpenPrivacy }: ConsentModalProps) {
   const { t } = useT();
   const [service, setService] = useState(false);
   const [modelImprovement, setModelImprovement] = useState(false);
@@ -59,6 +60,7 @@ export function ConsentModal({ open, onClose, onAccept, onOpenPrivacy }: Consent
 
   return (
     <div
+      className={`glass-modal-backdrop${closing ? " is-closing" : ""}`}
       style={{
         position: "fixed",
         inset: 0,
@@ -78,7 +80,7 @@ export function ConsentModal({ open, onClose, onAccept, onOpenPrivacy }: Consent
       <div
         ref={dialogRef}
         tabIndex={-1}
-        className="glass-card-strong"
+        className="glass-card-strong glass-modal-card"
         style={{
           borderRadius: "var(--radius-lg)",
           maxWidth: 512,

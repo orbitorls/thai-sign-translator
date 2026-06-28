@@ -70,6 +70,14 @@
   /* Transitions */
   --transition: 180ms ease;
 
+  /* Motion scale */
+  --ease-out:    cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-glass:  cubic-bezier(0.32, 0.72, 0, 1);
+  --dur-fast:   140ms;
+  --dur-base:   240ms;
+  --dur-slow:   360ms;
+
   /* Layout */
   --max-width: 1120px;
   --bottom-nav-height: calc(3.5rem + max(var(--space-5), env(safe-area-inset-bottom, 0px)) + var(--space-2));
@@ -251,7 +259,12 @@ button {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
+  *, *::before, *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration:  0.01ms !important;
+    animation-delay:     0ms   !important;
+    scroll-behavior:     auto  !important;
+  }
 }
 
 /* Shared keyframes (used by CameraView REC indicator and ResultCard spinner) */
@@ -263,6 +276,33 @@ button {
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
+
+/* ── Entry / exit keyframes ── */
+@keyframes fade-in    { from { opacity: 0 } to { opacity: 1 } }
+@keyframes fade-out   { from { opacity: 1 } to { opacity: 0 } }
+@keyframes fade-in-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: none; }
+}
+@keyframes scale-in {
+  from { opacity: 0; transform: scale(0.94) translateY(8px); }
+  to   { opacity: 1; transform: none; }
+}
+@keyframes scale-out {
+  from { opacity: 1; transform: none; }
+  to   { opacity: 0; transform: scale(0.94) translateY(8px); }
+}
+@keyframes overlay-in {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: none; }
+}
+@keyframes overlay-out {
+  from { opacity: 1; transform: none; }
+  to   { opacity: 0; transform: translateY(14px); }
+}
+@keyframes backdrop-in  { from { opacity: 0; } to { opacity: 1; } }
+@keyframes backdrop-out { from { opacity: 1; } to { opacity: 0; } }
+@keyframes icon-bounce  { from { transform: scale(0.8); } to { transform: scale(1); } }
 
 /* ── Immersive Glass Design System ──────────────────────────────── */
 :root {
@@ -614,6 +654,7 @@ button {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
+  animation: scale-in var(--dur-base) var(--ease-spring) both;
   z-index: 15;
   display: flex;
   flex-direction: column;
@@ -650,6 +691,7 @@ button {
   box-shadow: var(--glass-shadow);
 }
 .bottom-nav-item {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -663,7 +705,24 @@ button {
   font-size: var(--font-size-xs);
   font-weight: 700;
   cursor: pointer;
-  transition: background var(--transition), color var(--transition);
+  transition: color var(--transition);
+  z-index: 1;
+}
+/* Animated pill highlight via ::before */
+.bottom-nav-item::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius-md);
+  background: rgba(37, 99, 235, 0.55);
+  opacity: 0;
+  transform: scale(0.82);
+  transition: opacity var(--dur-fast) var(--ease-out), transform var(--dur-fast) var(--ease-spring);
+  z-index: -1;
+}
+.bottom-nav-item.on::before {
+  opacity: 1;
+  transform: scale(1);
 }
 .bottom-nav-float--5 {
   max-width: min(100vw - var(--space-4), 520px);
@@ -682,7 +741,9 @@ button {
   white-space: nowrap;
 }
 
-.bottom-nav-item.on { background: rgba(37, 99, 235, 0.55); color: #fff; }
+.bottom-nav-item.on { color: #fff; }
+/* Icon spring when tab becomes active */
+.bottom-nav-item.on .bottom-nav-ico { animation: icon-bounce var(--dur-fast) var(--ease-spring) both; }
 
 /* Consolidated mobile overrides — single @media (max-width: 480px) block */
 @media (max-width: 480px) {
@@ -732,6 +793,29 @@ button {
   -webkit-backdrop-filter: var(--glass-blur);
   overflow-y: auto;
   padding: calc(env(safe-area-inset-top, 0px) + var(--space-6)) var(--space-4) var(--space-6);
+  animation: overlay-in var(--dur-base) var(--ease-out) both;
+}
+.screen-overlay.is-closing {
+  animation: overlay-out var(--dur-base) var(--ease-glass) both;
+}
+
+/* ── Modal backdrop + card animations ── */
+.glass-modal-backdrop {
+  animation: backdrop-in var(--dur-base) var(--ease-out) both;
+}
+.glass-modal-backdrop.is-closing {
+  animation: backdrop-out var(--dur-base) var(--ease-glass) both;
+}
+.glass-modal-backdrop .glass-modal-card {
+  animation: scale-in var(--dur-base) var(--ease-spring) both;
+}
+.glass-modal-backdrop.is-closing .glass-modal-card {
+  animation: scale-out var(--dur-base) var(--ease-glass) both;
+}
+
+/* ── ResultCard sentence swap animation ── */
+.result-sentence {
+  animation: fade-in-up var(--dur-base) var(--ease-out) both;
 }
 .screen-sheet { max-width: 620px; margin: 0 auto; color: #fff; }
 .sheet-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--space-5); gap: var(--space-3); }
