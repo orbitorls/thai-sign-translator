@@ -24,7 +24,6 @@ export const en = {
   historyTitle: "History",
   close: "Close",
   ariaSpeak: "Listen",
-  speaking: "Speaking…",
   timeJustNow: "Just now",
   timeMinutesAgo: (n: number) => `${n} min ago`,
   timeHoursAgo: (n: number) => `${n} hr ago`,
@@ -187,7 +186,7 @@ export const en = {
   clearSearch: "Clear search",
 
   // Feedback / teach
-  navTeach: "Teach",
+  navTeach: "Teach Model",
   feedbackOptInTitle: "Help Improve the Model",
   feedbackOptInLabel: "Share pose data for model training",
   feedbackOptInDesc:

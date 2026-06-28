@@ -24,7 +24,6 @@ export const th = {
   historyTitle: "ประวัติ",
   close: "ปิด",
   ariaSpeak: "ฟังเสียงอ่าน",
-  speaking: "กำลังพูด…",
   timeJustNow: "เมื่อสักครู่",
   timeMinutesAgo: (n: number) => `${n} นาทีที่แล้ว`,
   timeHoursAgo: (n: number) => `${n} ชั่วโมงที่แล้ว`,
@@ -185,7 +184,7 @@ export const th = {
   clearSearch: "ล้างการค้นหา",
 
   // Feedback / teach
-  navTeach: "สอน",
+  navTeach: "สอนโมเดล",
   feedbackOptInTitle: "ช่วยปรับปรุงโมเดล",
   feedbackOptInLabel: "แชร์ข้อมูลท่าทางเพื่อฝึกโมเดล",
   feedbackOptInDesc:

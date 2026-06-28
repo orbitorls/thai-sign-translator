@@ -32,7 +32,7 @@ export function ConfirmModal({
   const dialogRef = useRef<HTMLDivElement>(null);
 
   // initialFocus "first" will land on the cancel button (it is rendered first in DOM)
-  useFocusTrap(dialogRef, open, { onEscape: onCancel, initialFocus: "first" });
+  useFocusTrap(dialogRef, open, onCancel, "first");
 
   if (!open) return null;
 
@@ -42,13 +42,13 @@ export function ConfirmModal({
   return (
     <div
       className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="confirm-modal-title"
     >
       <div
         ref={dialogRef}
         tabIndex={-1}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="confirm-modal-title"
         className="glass-card-strong rounded-2xl max-w-sm w-full p-6 outline-none"
       >
         <h2

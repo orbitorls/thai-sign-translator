@@ -9,9 +9,10 @@ const FOCUSABLE_SELECTOR =
  * Also handles Escape key — calls `onEscape` if provided.
  */
 export function useFocusTrap(
-  containerRef: React.RefObject<HTMLElement>,
+  containerRef: React.RefObject<HTMLElement | null>,
   active: boolean,
-  options?: { onEscape?: () => void; initialFocus?: "first" | "container" }
+  onEscape?: () => void,
+  initialFocus: "first" | "container" = "first"
 ): void {
   const savedFocusRef = useRef<Element | null>(null);
 
@@ -24,7 +25,6 @@ export function useFocusTrap(
     savedFocusRef.current = document.activeElement;
 
     // Move focus into dialog
-    const { initialFocus = "first" } = options ?? {};
     if (initialFocus === "first") {
       const first = container.querySelector<HTMLElement>(FOCUSABLE_SELECTOR);
       first ? first.focus() : container.focus();
@@ -34,9 +34,9 @@ export function useFocusTrap(
 
     function handleKey(e: KeyboardEvent) {
       if (!container) return;
-      if (e.key === "Escape" && options?.onEscape) {
+      if (e.key === "Escape" && onEscape) {
         e.preventDefault();
-        options.onEscape();
+        onEscape();
         return;
       }
       if (e.key === "Tab") {
@@ -64,5 +64,5 @@ export function useFocusTrap(
         (savedFocusRef.current as HTMLElement).focus();
       }
     };
-  }, [active, containerRef, options]);
+  }, [active, onEscape, initialFocus]);
 }
