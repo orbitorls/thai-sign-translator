@@ -12,14 +12,16 @@ const stroke = {
   strokeLinejoin: "round" as const,
 };
 
-function formatTime(ts: number, lang: "th" | "en"): string {
-  const locale = lang === "th" ? "th-TH" : "en-US";
-  return new Date(ts).toLocaleString(locale, {
-    day: "numeric",
-    month: "short",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+function formatRelative(ts: number, t: ReturnType<typeof useI18n>, lang: "th" | "en"): string {
+  const diff = Date.now() - ts;
+  const min = Math.floor(diff / 60000);
+  if (min < 1) return t.timeJustNow;
+  if (min < 60) return t.timeMinutesAgo(min);
+  const hr = Math.floor(min / 60);
+  if (hr < 24) return t.timeHoursAgo(hr);
+  const day = Math.floor(hr / 24);
+  if (day < 7) return t.timeDaysAgo(day);
+  return new Date(ts).toLocaleDateString(lang === "th" ? "th-TH" : "en-US", { day: "numeric", month: "short" });
 }
 
 export function HistoryScreen() {
@@ -47,7 +49,7 @@ export function HistoryScreen() {
 
       {items.length === 0 ? (
         <div className="empty-state">
-          <svg viewBox="0 0 24 24" {...stroke}>
+          <svg viewBox="0 0 24 24" aria-hidden="true" {...stroke}>
             <circle cx="12" cy="12" r="9" />
             <path d="M12 7v5l3 2" />
           </svg>
@@ -60,9 +62,9 @@ export function HistoryScreen() {
               <button type="button" className="history-row" onClick={() => speak(it.sentence)}>
                 <div className="history-word">
                   <b>{it.sentence}</b>
-                  <small>{formatTime(it.ts, lang)}</small>
+                  <small>{formatRelative(it.ts, th, lang)}</small>
                 </div>
-                <svg viewBox="0 0 24 24" {...stroke}>
+                <svg viewBox="0 0 24 24" aria-hidden="true" {...stroke}>
                   <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
                   <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
                   <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />

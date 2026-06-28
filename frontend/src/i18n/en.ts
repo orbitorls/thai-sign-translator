@@ -65,4 +65,13 @@ export const en: typeof th = {
   settingsLandmarks: "Landmarks",
   settingsClearHistory: "Clear history",
   confirmClear: "Clear all history?",
+
+  // Misc actions
+  close: "Close",
+
+  // Relative time
+  timeJustNow: "Just now",
+  timeMinutesAgo: (n: number) => `${n} min ago`,
+  timeHoursAgo: (n: number) => `${n} hr ago`,
+  timeDaysAgo: (n: number) => `${n} days ago`,
 };

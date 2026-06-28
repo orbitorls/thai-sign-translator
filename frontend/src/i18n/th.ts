@@ -69,4 +69,13 @@ export const th = {
   settingsLandmarks: "เส้นโครงร่าง",
   settingsClearHistory: "ล้างประวัติ",
   confirmClear: "ล้างประวัติทั้งหมด?",
+
+  // Misc actions
+  close: "ปิด",
+
+  // Relative time
+  timeJustNow: "เมื่อสักครู่",
+  timeMinutesAgo: (n: number) => `${n} นาทีที่แล้ว`,
+  timeHoursAgo: (n: number) => `${n} ชั่วโมงที่แล้ว`,
+  timeDaysAgo: (n: number) => `${n} วันที่แล้ว`,
 };

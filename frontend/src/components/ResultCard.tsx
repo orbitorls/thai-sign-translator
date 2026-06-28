@@ -46,7 +46,7 @@ export function ResultCard({ status, result, error, errorStatus, variant }: Resu
           aria-label={th.ariaSpeak}
           title={th.ariaSpeak}
         >
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
             <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
             <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
@@ -60,8 +60,8 @@ export function ResultCard({ status, result, error, errorStatus, variant }: Resu
           style={{
             position: "absolute",
             top: 0,
-            left: "-var(--space-5)",
-            right: "-var(--space-5)",
+            left: "calc(-1 * var(--space-5))",
+            right: "calc(-1 * var(--space-5))",
             height: 2,
             overflow: "hidden",
             borderRadius: "var(--radius-lg) var(--radius-lg) 0 0",

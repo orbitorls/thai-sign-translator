@@ -53,7 +53,7 @@ export function BottomNav({ active, onChange }: BottomNavProps) {
           aria-current={active === it.key ? "page" : undefined}
           aria-label={it.label}
         >
-          <span className="bottom-nav-ico">{it.icon}</span>
+          <span className="bottom-nav-ico" aria-hidden="true">{it.icon}</span>
           <span>{it.label}</span>
         </button>
       ))}

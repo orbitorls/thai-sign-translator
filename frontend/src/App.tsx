@@ -184,19 +184,21 @@ function AppShell() {
         </div>
       )}
 
-      {/* Supported phrases slide-up panel */}
-      <div className={`result-glass-panel${phrasesOpen ? " open" : ""}`} style={{ zIndex: 30 }} aria-hidden={!phrasesOpen}>
-        <div className="glass-panel-handle" />
-        <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: "var(--space-3)" }}>
-          <button className="glass-chip" onClick={() => setPhrasesOpen(false)} aria-label={th.navSettings}>
-            ✕
-          </button>
+      {/* Supported phrases slide-up panel — only on camera tab */}
+      {screen === "camera" && (
+        <div className={`result-glass-panel${phrasesOpen ? " open" : ""}`} style={{ zIndex: 30 }} aria-hidden={!phrasesOpen}>
+          <div className="glass-panel-handle" />
+          <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: "var(--space-3)" }}>
+            <button className="glass-chip" onClick={() => setPhrasesOpen(false)} aria-label={th.close}>
+              ✕
+            </button>
+          </div>
+          <SupportedPhrases glass />
         </div>
-        <SupportedPhrases glass />
-      </div>
+      )}
 
       {/* Floating bottom nav — always visible, above overlays */}
-      <BottomNav active={screen} onChange={setScreen} />
+      <BottomNav active={screen} onChange={(s) => { setScreen(s); setPhrasesOpen(false); }} />
     </main>
   );
 }
