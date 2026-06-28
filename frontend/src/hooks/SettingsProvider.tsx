@@ -4,10 +4,10 @@ export type Lang = "th" | "en";
 
 export interface Settings {
   lang: Lang;
-  showLandmarks: boolean;
+  devMode: boolean;
 }
 
-const DEFAULT_SETTINGS: Settings = { lang: "th", showLandmarks: false };
+const DEFAULT_SETTINGS: Settings = { lang: "th", devMode: false };
 const STORAGE_KEY = "tsl.settings.v1";
 
 function loadSettings(): Settings {
@@ -17,7 +17,7 @@ function loadSettings(): Settings {
     const parsed = JSON.parse(raw);
     return {
       lang: parsed.lang === "en" ? "en" : "th",
-      showLandmarks: Boolean(parsed.showLandmarks),
+      devMode: Boolean(parsed.devMode ?? parsed.showLandmarks),
     };
   } catch {
     return DEFAULT_SETTINGS;
@@ -26,13 +26,13 @@ function loadSettings(): Settings {
 
 interface SettingsContextValue extends Settings {
   setLang: (lang: Lang) => void;
-  setShowLandmarks: (v: boolean) => void;
+  setDevMode: (v: boolean) => void;
 }
 
 const SettingsContext = createContext<SettingsContextValue>({
   ...DEFAULT_SETTINGS,
   setLang: () => {},
-  setShowLandmarks: () => {},
+  setDevMode: () => {},
 });
 
 export function SettingsProvider({ children }: { children: ReactNode }) {
@@ -47,13 +47,10 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   }, [settings]);
 
   const setLang = useCallback((lang: Lang) => setSettings((s) => ({ ...s, lang })), []);
-  const setShowLandmarks = useCallback(
-    (showLandmarks: boolean) => setSettings((s) => ({ ...s, showLandmarks })),
-    []
-  );
+  const setDevMode = useCallback((devMode: boolean) => setSettings((s) => ({ ...s, devMode })), []);
 
   return (
-    <SettingsContext.Provider value={{ ...settings, setLang, setShowLandmarks }}>
+    <SettingsContext.Provider value={{ ...settings, setLang, setDevMode }}>
       {children}
     </SettingsContext.Provider>
   );

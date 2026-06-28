@@ -67,6 +67,7 @@ export const en: typeof th = {
   settingsTitle: "Settings",
   settingsLanguage: "Language",
   settingsLandmarks: "Landmarks",
+  settingsDevMode: "Developer Mode",
   settingsClearHistory: "Clear history",
   confirmClear: "Clear all history?",
 

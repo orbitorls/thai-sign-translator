@@ -98,6 +98,7 @@ export interface HolisticCaptureState {
   recording: boolean;
   handsPresent: boolean;
   cameraError: string | null;
+  fps: number;
   start: () => void;
   /** Returns frames and hand-frame-count for the window just stopped. */
   stop: () => StopResult;
@@ -164,6 +165,10 @@ export function useHolisticCapture(
   const [recording, setRecording] = useState(false);
   const [handsPresent, setHandsPresent] = useState(false);
   const [cameraError, setCameraError] = useState<string | null>(null);
+
+  const [fps, setFps] = useState(0);
+  const fpsCountRef = useRef(0);
+  const fpsStartRef = useRef(0);
 
   const recordingRef = useRef(false);
   const frameBufferRef = useRef<Frame[]>([]);
@@ -238,6 +243,19 @@ export function useHolisticCapture(
       const p = pick(result);
       drawOverlay(overlayRef.current, video, p, overlayEnabledRef.current);
 
+      if (overlayEnabledRef.current) {
+        fpsCountRef.current += 1;
+        if (fpsStartRef.current === 0) fpsStartRef.current = ts;
+        const elapsed = ts - fpsStartRef.current;
+        if (elapsed >= 1000) {
+          setFps(Math.round((fpsCountRef.current * 1000) / elapsed));
+          fpsCountRef.current = 0;
+          fpsStartRef.current = ts;
+        }
+      } else if (fpsStartRef.current !== 0) {
+        fpsStartRef.current = 0; fpsCountRef.current = 0; // reset when dev off
+      }
+
       const hasHands = Boolean(p.left || p.right);
       // Edge-triggered state update — avoids a re-render every frame.
       if (hasHands !== handsPresentRef.current) {
@@ -290,5 +308,5 @@ export function useHolisticCapture(
     videoRef.current?.play().catch(() => {});
   }
 
-  return { videoRef, overlayRef, ready, recording, handsPresent, cameraError, start, stop, pause, resume };
+  return { videoRef, overlayRef, ready, recording, handsPresent, cameraError, fps, start, stop, pause, resume };
 }

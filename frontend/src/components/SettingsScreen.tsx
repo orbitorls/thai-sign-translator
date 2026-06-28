@@ -12,7 +12,7 @@ const stroke = {
 };
 
 export function SettingsScreen() {
-  const { lang, setLang, showLandmarks, setShowLandmarks } = useSettings();
+  const { lang, setLang, devMode, setDevMode } = useSettings();
   const { clear } = useHistory();
   const th = useI18n();
 
@@ -40,19 +40,19 @@ export function SettingsScreen() {
           </div>
         </div>
 
-        {/* Landmarks toggle */}
+        {/* Developer Mode toggle */}
         <div className="settings-row">
           <svg viewBox="0 0 24 24" aria-hidden="true" {...stroke}>
             <polygon points="12 2 15 9 22 9 16 14 18 21 12 17 6 21 8 14 2 9 9 9" />
           </svg>
-          <span className="settings-label">{th.settingsLandmarks}</span>
+          <span className="settings-label">{th.settingsDevMode}</span>
           <button
             type="button"
             role="switch"
-            aria-checked={showLandmarks}
-            aria-label={th.settingsLandmarks}
-            className={`toggle${showLandmarks ? " on" : ""}`}
-            onClick={() => setShowLandmarks(!showLandmarks)}
+            aria-checked={devMode}
+            aria-label={th.settingsDevMode}
+            className={`toggle${devMode ? " on" : ""}`}
+            onClick={() => setDevMode(!devMode)}
           />
         </div>
 

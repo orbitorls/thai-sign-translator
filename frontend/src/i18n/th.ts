@@ -71,6 +71,7 @@ export const th = {
   settingsTitle: "ตั้งค่า",
   settingsLanguage: "ภาษา",
   settingsLandmarks: "เส้นโครงร่าง",
+  settingsDevMode: "โหมดนักพัฒนา",
   settingsClearHistory: "ล้างประวัติ",
   confirmClear: "ล้างประวัติทั้งหมด?",
 

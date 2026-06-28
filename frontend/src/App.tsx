@@ -13,6 +13,7 @@ import { SupportedPhrases } from "./components/SupportedPhrases";
 import { BottomNav, Screen } from "./components/BottomNav";
 import { HistoryScreen } from "./components/HistoryScreen";
 import { SettingsScreen } from "./components/SettingsScreen";
+import { DevMetricsOverlay } from "./components/DevMetricsOverlay";
 
 const CONFIDENCE_FLOOR = 0.3;
 const HANDS_GONE_DEBOUNCE_MS = 800;
@@ -22,9 +23,9 @@ const MIN_TOTAL_FRAMES = 8;
 function AppShell() {
   const th = useI18n();
   const { models, selectedModelId, loading: modelsLoading, error: modelsError } = useModels();
-  const { showLandmarks } = useSettings();
+  const { devMode } = useSettings();
   const history = useHistory();
-  const capture = useHolisticCapture({ overlayEnabled: showLandmarks });
+  const capture = useHolisticCapture({ overlayEnabled: devMode });
   const translator = useTranslate();
   const feedback = useFeedback();
   const feedbackRef = useRef(feedback); feedbackRef.current = feedback;
@@ -173,6 +174,10 @@ function AppShell() {
           </button>
         </div>
       </div>
+
+      {devMode && screen === "camera" && (
+        <DevMetricsOverlay fps={capture.fps} latencyMs={translator.lastLatencyMs} confidence={displayedResult?.score ?? null} />
+      )}
 
       {/* Camera permission error */}
       {hasCameraError && (
