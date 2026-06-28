@@ -1,13 +1,14 @@
-import React, { useEffect, useRef, useState } from "react";
-import { Link } from "react-router-dom";
+import React, { useRef, useState } from "react";
 import { useT } from "../../i18n";
 import { Toggle } from "../settings/Toggle";
 import type { ConsentScope } from "../../privacy/consentStorage";
+import { useFocusTrap } from "../../hooks/useFocusTrap";
 
 interface ConsentModalProps {
   open: boolean;
   onClose: () => void;
   onAccept: (scopes: Partial<Record<ConsentScope, boolean>>) => Promise<void>;
+  onOpenPrivacy?: () => void;
 }
 
 const OPTIONAL_SCOPES: ConsentScope[] = [
@@ -16,10 +17,7 @@ const OPTIONAL_SCOPES: ConsentScope[] = [
   "academic_publication",
 ];
 
-const FOCUSABLE_SELECTOR =
-  'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
-
-export function ConsentModal({ open, onClose, onAccept }: ConsentModalProps) {
+export function ConsentModal({ open, onClose, onAccept, onOpenPrivacy }: ConsentModalProps) {
   const { t } = useT();
   const [service, setService] = useState(false);
   const [modelImprovement, setModelImprovement] = useState(false);
@@ -29,39 +27,10 @@ export function ConsentModal({ open, onClose, onAccept }: ConsentModalProps) {
   const [error, setError] = useState("");
   const dialogRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    if (!open) return;
-    const dialog = dialogRef.current;
-    if (!dialog) return;
-
-    // Focus the dialog container so the modal is announced and Tab starts inside.
-    dialog.focus();
-
-    function handleKey(e: KeyboardEvent) {
-      if (e.key === "Escape") {
-        e.preventDefault();
-        onClose();
-        return;
-      }
-      if (e.key === "Tab" && dialog) {
-        const els = Array.from(
-          dialog.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR),
-        ).filter((el) => !el.hasAttribute("disabled"));
-        if (els.length === 0) return;
-        const firstEl = els[0];
-        const lastEl = els[els.length - 1];
-        if (e.shiftKey && document.activeElement === firstEl) {
-          e.preventDefault();
-          lastEl.focus();
-        } else if (!e.shiftKey && document.activeElement === lastEl) {
-          e.preventDefault();
-          firstEl.focus();
-        }
-      }
-    }
-    document.addEventListener("keydown", handleKey);
-    return () => document.removeEventListener("keydown", handleKey);
-  }, [open, onClose]);
+  // Block Esc when service consent is not yet granted (mandatory gate).
+  // Once service is accepted the user may press Esc to dismiss.
+  const escapeHandler = service ? () => onClose() : undefined;
+  useFocusTrap(dialogRef, open, escapeHandler, "first");
 
   if (!open) return null;
 
@@ -89,23 +58,68 @@ export function ConsentModal({ open, onClose, onAccept }: ConsentModalProps) {
 
   return (
     <div
-      className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
+      style={{
+        position: "fixed",
+        inset: 0,
+        zIndex: 60,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: "var(--space-4)",
+        background: "rgba(0,0,0,0.4)",
+        backdropFilter: "blur(4px)",
+      }}
       role="dialog"
       aria-modal="true"
       aria-labelledby="consent-modal-title"
+      aria-describedby="consent-modal-intro"
     >
       <div
         ref={dialogRef}
         tabIndex={-1}
-        className="glass-card-strong rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto p-6 outline-none"
+        className="glass-card-strong"
+        style={{
+          borderRadius: "var(--radius-lg)",
+          maxWidth: 512,
+          width: "100%",
+          maxHeight: "90dvh",
+          overflowY: "auto",
+          padding: "var(--space-6)",
+          outline: "none",
+        }}
       >
-        <h2 id="consent-modal-title" className="font-headline-md text-headline-md text-on-surface mb-2">
+        <h2
+          id="consent-modal-title"
+          style={{
+            fontSize: "var(--font-size-xl)",
+            fontWeight: 800,
+            color: "#121c2a",
+            marginBottom: "var(--space-2)",
+          }}
+        >
           {t.consentModalTitle}
         </h2>
-        <p className="font-body-md text-body-md text-on-surface-variant mb-4">{t.consentModalIntro}</p>
-        <p className="font-label-md text-label-md text-on-surface-variant mb-4">{t.consentMinorNotice}</p>
+        <p
+          id="consent-modal-intro"
+          style={{
+            fontSize: "var(--font-size-sm)",
+            color: "#526071",
+            marginBottom: "var(--space-4)",
+          }}
+        >
+          {t.consentModalIntro}
+        </p>
+        <p
+          style={{
+            fontSize: "var(--font-size-sm)",
+            color: "#526071",
+            marginBottom: "var(--space-4)",
+          }}
+        >
+          {t.consentMinorNotice}
+        </p>
 
-        <div className="flex flex-col gap-4 mb-6">
+        <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-4)", marginBottom: "var(--space-6)" }}>
           <ConsentRow
             id="consent-service"
             title={t.consentServiceTitle}
@@ -142,27 +156,57 @@ export function ConsentModal({ open, onClose, onAccept }: ConsentModalProps) {
         </div>
 
         {error && (
-          <p className="font-label-md text-error mb-3" role="alert">
+          <p
+            role="alert"
+            style={{
+              fontSize: "var(--font-size-sm)",
+              color: "var(--color-danger)",
+              marginBottom: "var(--space-3)",
+            }}
+          >
             {error}
           </p>
         )}
 
-        <div className="flex flex-col sm:flex-row gap-3">
+        <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-3)" }}>
           <button
             type="button"
             onClick={() => void handleAccept()}
             disabled={submitting}
-            className="glass-button-primary flex-1 min-h-[44px] px-6 py-3 rounded-xl gap-2 flex items-center justify-center transition-all duration-200 ease-out outline-none hover:brightness-110 hover:scale-105 focus-visible:ring-2 focus-visible:ring-primary/40 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+            className="glass-button-primary"
+            style={{
+              flex: 1,
+              minHeight: 44,
+              padding: "var(--space-3) var(--space-6)",
+              borderRadius: "var(--radius-md)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "var(--space-2)",
+            }}
           >
             {submitting ? t.consentSaving : t.consentAccept}
           </button>
-          <Link
-            to="/privacy"
-            className="glass-button flex-1 min-h-[44px] px-6 py-3 text-center rounded-xl gap-2 flex items-center justify-center text-on-surface transition-all duration-200 ease-out outline-none hover:brightness-110 hover:scale-105 focus-visible:ring-2 focus-visible:ring-primary/40 active:scale-95"
-            onClick={onClose}
+          <button
+            type="button"
+            onClick={() => {
+              onClose();
+              onOpenPrivacy?.();
+            }}
+            className="glass-button"
+            style={{
+              flex: 1,
+              minHeight: 44,
+              padding: "var(--space-3) var(--space-6)",
+              borderRadius: "var(--radius-md)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "var(--space-2)",
+            }}
           >
             {t.privacyPolicy}
-          </Link>
+          </button>
         </div>
       </div>
     </div>
@@ -198,15 +242,47 @@ interface ConsentRowProps {
 function ConsentRow({ id, title, desc, required, checked, onChange }: ConsentRowProps) {
   const { t } = useT();
   return (
-    <div className="glass-panel rounded-xl flex justify-between items-start gap-4 p-4">
-      <div className="min-w-0">
-        <h3 className="font-label-lg text-label-lg text-on-surface">
+    <div
+      className="glass-panel"
+      style={{
+        borderRadius: "var(--radius-md)",
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "flex-start",
+        gap: "var(--space-4)",
+        padding: "var(--space-4)",
+      }}
+    >
+      <div style={{ minWidth: 0 }}>
+        <h3
+          style={{
+            fontSize: "var(--font-size-base)",
+            fontWeight: 700,
+            color: "#121c2a",
+          }}
+        >
           {title}
           {required && (
-            <span className="ml-2 text-error font-label-md">({t.consentRequired})</span>
+            <span
+              style={{
+                marginLeft: "var(--space-2)",
+                fontSize: "var(--font-size-sm)",
+                color: "var(--color-danger)",
+              }}
+            >
+              ({t.consentRequired})
+            </span>
           )}
         </h3>
-        <p className="font-body-md text-body-md text-on-surface-variant text-sm mt-1">{desc}</p>
+        <p
+          style={{
+            fontSize: "var(--font-size-sm)",
+            color: "#526071",
+            marginTop: "var(--space-1)",
+          }}
+        >
+          {desc}
+        </p>
       </div>
       <Toggle id={id} checked={checked} onChange={onChange} />
     </div>
