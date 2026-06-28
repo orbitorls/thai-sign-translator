@@ -1,6 +1,6 @@
 /** Thai UI string constants. */
 export const th = {
-  appTitle: "แปลภาษามือไทย",
+  appTitle: "วาทยากร",
   appSubtitle: "บันทึกภาษามือแล้วรับคำแปลภาษาไทย",
   assistantLabel: "ผลลัพธ์",
   cameraPanelLabel: "กล้อง",
@@ -43,4 +43,30 @@ export const th = {
   supportedPhrasesCount: (n: number) => `${n} วลี`,
   supportedPhrasesShow: "ดูวลีที่รองรับ",
   supportedPhrasesHide: "ซ่อน",
-} as const;
+
+  // Brand / nav
+  brandShort: "วท",
+  navCamera: "กล้อง",
+  navHistory: "ประวัติ",
+  navSettings: "ตั้งค่า",
+
+  // Camera live chip / hint
+  cameraLive: "กล้อง Live",
+  cameraOpening: "กำลังเปิด...",
+  showSignHint: "แสดงภาษามือต่อกล้อง",
+
+  // Speaker / TTS
+  ariaSpeak: "ฟังเสียงอ่าน",
+  speaking: "กำลังพูด…",
+
+  // History
+  historyTitle: "ประวัติ",
+  historyEmpty: "ยังไม่มีประวัติ",
+
+  // Settings
+  settingsTitle: "ตั้งค่า",
+  settingsLanguage: "ภาษา",
+  settingsLandmarks: "เส้นโครงร่าง",
+  settingsClearHistory: "ล้างประวัติ",
+  confirmClear: "ล้างประวัติทั้งหมด?",
+};
