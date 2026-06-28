@@ -1,6 +1,7 @@
 import React from "react";
 import { TranslateResult } from "../api/client";
-import { th } from "../i18n/th";
+import { useI18n } from "../i18n";
+import { useSpeech } from "../hooks/useSpeech";
 
 interface ResultCardProps {
   status: "idle" | "loading" | "success" | "error";
@@ -11,6 +12,8 @@ interface ResultCardProps {
 }
 
 export function ResultCard({ status, result, error, errorStatus, variant }: ResultCardProps) {
+  const th = useI18n();
+  const { speak, speaking, supported } = useSpeech();
   const glass = variant === "glass";
   const pct = result ? Math.round(result.score * 100) : null;
 
@@ -18,6 +21,9 @@ export function ResultCard({ status, result, error, errorStatus, variant }: Resu
   const mutedColor = glass ? "rgba(255,255,255,0.6)" : "var(--color-text-muted)";
   const placeholderColor = glass ? "rgba(255,255,255,0.28)" : "var(--color-text-placeholder)";
   const trackColor = glass ? "rgba(255,255,255,0.15)" : "var(--color-border)";
+
+  // Show the speaker whenever a result sentence is present and TTS is supported.
+  const showSpeaker = supported && Boolean(result?.sentence);
 
   return (
     <div
@@ -32,7 +38,22 @@ export function ResultCard({ status, result, error, errorStatus, variant }: Resu
         gap: "var(--space-3)",
       }}
     >
-      {/* Loading bar at top edge of panel — visible during any loading */}
+      {showSpeaker && (
+        <button
+          type="button"
+          className={`result-speaker-btn${speaking ? " playing" : ""}`}
+          onClick={() => speak(result!.sentence)}
+          aria-label={th.ariaSpeak}
+          title={th.ariaSpeak}
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+            <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
+            <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
+          </svg>
+        </button>
+      )}
+
       {status === "loading" && (
         <div
           aria-hidden="true"
@@ -51,7 +72,6 @@ export function ResultCard({ status, result, error, errorStatus, variant }: Resu
       )}
 
       {status === "loading" && result && (
-        /* Previous result shown dimmed while new one loads */
         <>
           <p
             style={{
@@ -103,16 +123,14 @@ export function ResultCard({ status, result, error, errorStatus, variant }: Resu
           </p>
           {pct !== null && (
             <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-2)" }}>
-              <span style={{ fontSize: "var(--font-size-sm)", color: mutedColor }}>
-                {th.confidence(pct)}
-              </span>
+              <span style={{ fontSize: "var(--font-size-sm)", color: mutedColor }}>{th.confidence(pct)}</span>
               <ConfidenceBar pct={pct} trackColor={trackColor} />
             </div>
           )}
         </>
       )}
 
-      {(status === "idle") && (
+      {status === "idle" && (
         <p style={{ fontSize: "var(--font-size-3xl)", color: placeholderColor, fontWeight: 300 }}>
           {th.resultPlaceholder}
         </p>
@@ -123,14 +141,7 @@ export function ResultCard({ status, result, error, errorStatus, variant }: Resu
 
 function ConfidenceBar({ pct, trackColor }: { pct: number; trackColor: string }) {
   return (
-    <div
-      style={{
-        height: 6,
-        borderRadius: "var(--radius-full)",
-        background: trackColor,
-        overflow: "hidden",
-      }}
-    >
+    <div style={{ height: 6, borderRadius: "var(--radius-full)", background: trackColor, overflow: "hidden" }}>
       <div
         style={{
           height: "100%",

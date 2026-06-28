@@ -497,6 +497,8 @@ button {
 /* Live mode: always visible (no slide-in needed) */
 .result-glass-panel.live {
   transform: none;
+  overflow: visible;   /* allow the speaker button to float past the panel edge */
+  max-height: none;
 }
 
 @media (min-width: 680px) {
@@ -536,6 +538,32 @@ button {
 
 .glass-action-btn:hover  { background: rgba(255, 255, 255, 0.24); }
 .glass-action-btn:active { background: rgba(255, 255, 255, 0.34); }
+
+/* ── Result speaker button (floats on the card's top-right corner) ── */
+.result-speaker-btn {
+  position: absolute;
+  top: -28px;
+  right: 16px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  cursor: pointer;
+  z-index: 2;
+  background: linear-gradient(180deg, rgba(37, 99, 235, 0.96), rgba(29, 78, 216, 0.96));
+  border: 2px solid rgba(255, 255, 255, 0.5);
+  box-shadow: 0 10px 24px rgba(37, 99, 235, 0.5), 0 2px 6px rgba(0, 0, 0, 0.4);
+  transition: transform var(--transition);
+}
+.result-speaker-btn:active { transform: scale(0.94); }
+.result-speaker-btn svg { width: 26px; height: 26px; }
+.result-speaker-btn.playing { animation: spk-ring 1.4s ease-out infinite; }
+@keyframes spk-ring {
+  0%   { box-shadow: 0 10px 24px rgba(37, 99, 235, 0.5), 0 0 0 0 rgba(74, 222, 128, 0.6); }
+  100% { box-shadow: 0 10px 24px rgba(37, 99, 235, 0.5), 0 0 0 16px rgba(74, 222, 128, 0); }
+}
 
 /* Camera error overlay */
 .glass-camera-error {
