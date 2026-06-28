@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { TranslateResult } from "./api/client";
 import { ModelsProvider, useModels } from "./hooks/ModelsProvider";
+import { SettingsProvider } from "./hooks/SettingsProvider";
 import { useHolisticCapture } from "./hooks/useHolisticCapture";
 import { useTranslate } from "./hooks/useTranslate";
 import { CameraView } from "./components/CameraView";
@@ -234,7 +235,9 @@ function LiveStatusRow({ cameraReady, translating, hasResult, hasError, modelsEr
 export default function App() {
   return (
     <ModelsProvider>
-      <Translator />
+      <SettingsProvider>
+        <Translator />
+      </SettingsProvider>
     </ModelsProvider>
   );
 }
