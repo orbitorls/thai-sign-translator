@@ -62,6 +62,10 @@ export const th = {
   // History
   historyTitle: "ประวัติ",
   historyEmpty: "ยังไม่มีประวัติ",
+  actionCopy: "คัดลอก",
+  actionDelete: "ลบ",
+  actionShare: "แชร์",
+  copied: "คัดลอกแล้ว",
 
   // Settings
   settingsTitle: "ตั้งค่า",

@@ -58,6 +58,10 @@ export const en: typeof th = {
   // History
   historyTitle: "History",
   historyEmpty: "No history yet",
+  actionCopy: "Copy",
+  actionDelete: "Delete",
+  actionShare: "Share",
+  copied: "Copied",
 
   // Settings
   settingsTitle: "Settings",

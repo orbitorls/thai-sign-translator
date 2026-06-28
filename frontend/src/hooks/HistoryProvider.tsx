@@ -32,12 +32,14 @@ interface HistoryContextValue {
   items: HistoryItem[];
   add: (entry: { sentence: string; score: number; model: string }) => void;
   clear: () => void;
+  remove: (id: string) => void;
 }
 
 const HistoryContext = createContext<HistoryContextValue>({
   items: [],
   add: () => {},
   clear: () => {},
+  remove: () => {},
 });
 
 export function HistoryProvider({ children }: { children: ReactNode }) {
@@ -65,7 +67,11 @@ export function HistoryProvider({ children }: { children: ReactNode }) {
 
   const clear = useCallback(() => setItems([]), []);
 
-  return <HistoryContext.Provider value={{ items, add, clear }}>{children}</HistoryContext.Provider>;
+  const remove = useCallback((id: string) => {
+    setItems((prev) => prev.filter((it) => it.id !== id));
+  }, []);
+
+  return <HistoryContext.Provider value={{ items, add, clear, remove }}>{children}</HistoryContext.Provider>;
 }
 
 export function useHistory(): HistoryContextValue {
