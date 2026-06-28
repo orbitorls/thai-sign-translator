@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { TranslateResult } from "./api/client";
 import { ModelsProvider, useModels } from "./hooks/ModelsProvider";
 import { SettingsProvider } from "./hooks/SettingsProvider";
+import { HistoryProvider, useHistory } from "./hooks/HistoryProvider";
 import { useHolisticCapture } from "./hooks/useHolisticCapture";
 import { useTranslate } from "./hooks/useTranslate";
 import { CameraView } from "./components/CameraView";
@@ -23,6 +24,7 @@ function Translator() {
   const selectedModel = models.find((m) => m.id === selectedModelId);
   const [phrasesOpen, setPhrasesOpen] = useState(false);
   const [displayedResult, setDisplayedResult] = useState<TranslateResult | null>(null);
+  const history = useHistory();
 
   // Stable refs for interval/timeout callbacks — always point at current values.
   const captureRef = useRef(capture);
@@ -31,6 +33,8 @@ function Translator() {
   translatorRef.current = translator;
   const selectedModelIdRef = useRef(selectedModelId);
   selectedModelIdRef.current = selectedModelId;
+  const historyRef = useRef(history);
+  historyRef.current = history;
   const debounceRef = useRef<ReturnType<typeof setTimeout>>();
 
   // Auto-start collection as soon as camera is ready.
@@ -71,6 +75,11 @@ function Translator() {
     if (translator.status === "success" && translator.result) {
       if (translator.result.score >= CONFIDENCE_FLOOR) {
         setDisplayedResult(translator.result);
+        historyRef.current.add({
+          sentence: translator.result.sentence,
+          score: translator.result.score,
+          model: translator.result.model,
+        });
       }
     }
   }, [translator.status, translator.result]);
@@ -238,7 +247,9 @@ export default function App() {
   return (
     <ModelsProvider>
       <SettingsProvider>
-        <Translator />
+        <HistoryProvider>
+          <Translator />
+        </HistoryProvider>
       </SettingsProvider>
     </ModelsProvider>
   );
