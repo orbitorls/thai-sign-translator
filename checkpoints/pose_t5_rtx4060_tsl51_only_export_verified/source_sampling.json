@@ -1,0 +1,14 @@
+{
+  "enabled": false,
+  "source_counts": {
+    "tsl51": 227
+  },
+  "requested": "false",
+  "source_balance_enabled": false,
+  "focus_target_tokens": [],
+  "focus_target_max_multiplier": 1.0,
+  "focus_balance_enabled": false,
+  "source_reason": "disabled",
+  "focus_reason": "not_requested",
+  "reason": "disabled"
+}

@@ -1,0 +1,11 @@
+{
+  "input_dim": 162,
+  "d_model": 256,
+  "nhead": 8,
+  "num_encoder_layers": 4,
+  "num_decoder_layers": 4,
+  "dim_feedforward": 1024,
+  "dropout": 0.1,
+  "max_pos_len": 1024,
+  "vocab_size": 34
+}

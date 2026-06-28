@@ -1,0 +1,7 @@
+{
+  "input_dim": 312,
+  "num_encoder_layers": 2,
+  "encoder_dropout": 0.4,
+  "downsample_factor": 4,
+  "base_model_name": "/kaggle/input/datasets/orbitorls/thai-sign-mt5small"
+}

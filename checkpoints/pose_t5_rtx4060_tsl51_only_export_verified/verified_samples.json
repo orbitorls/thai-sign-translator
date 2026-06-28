@@ -1,0 +1,177 @@
+[
+  {
+    "example_id": "กรุงเทพ_var_1__ฉัน_var_2__เที่ยว_var_1__ชอบ_var_1_no_space_2",
+    "source": "tsl51",
+    "reference": "กรุงเทพ ฉัน เที่ยว ชอบ",
+    "hypothesis": "กรุงเทพ ฉัน เที่ยว ชอบ",
+    "score": 0.7271947264671326
+  },
+  {
+    "example_id": "กรุงเทพ_var_1__พี่_var_1__เที่ยว_var_1__ชอบ_var_1_no_space_0",
+    "source": "tsl51",
+    "reference": "กรุงเทพ พี่ เที่ยว ชอบ",
+    "hypothesis": "กรุงเทพ พี่ เที่ยว ชอบ",
+    "score": 0.8175783753395081
+  },
+  {
+    "example_id": "กรุงเทพ_var_1__ยาย_var_1__เที่ยว_var_1__ชอบ_var_1_with_space_5",
+    "source": "tsl51",
+    "reference": "กรุงเทพ ยาย เที่ยว ชอบ",
+    "hypothesis": "กรุงเทพ ยาย เที่ยว ชอบ",
+    "score": 0.81818026304245
+  },
+  {
+    "example_id": "กรุงเทพ_var_1__แม่_var_1__เที่ยว_var_1__ชอบ_var_1_no_space_0",
+    "source": "tsl51",
+    "reference": "กรุงเทพ แม่ เที่ยว ชอบ",
+    "hypothesis": "กรุงเทพ พี่ เที่ยว ชอบ",
+    "score": 0.7865410447120667
+  },
+  {
+    "example_id": "ขนมปัง_var_1__ฉัน_var_1__กิน_var_1_no_space_2",
+    "source": "tsl51",
+    "reference": "ขนมปัง ฉัน กิน",
+    "hypothesis": "ขนมปัง ฉัน กิน",
+    "score": 0.9988619089126587
+  },
+  {
+    "example_id": "ขนมปัง_var_1__แฟน_var_1__กิน_var_1_no_space_2",
+    "source": "tsl51",
+    "reference": "ขนมปัง แฟน กิน",
+    "hypothesis": "ขนมปัง ฉัน กิน",
+    "score": 0.8537611365318298
+  },
+  {
+    "example_id": "ขนมปัง_var_1__แม่_var_1__กิน_var_1_no_space_0",
+    "source": "tsl51",
+    "reference": "ขนมปัง แม่ กิน",
+    "hypothesis": "ขนมปัง แม่ กิน",
+    "score": 0.989976704120636
+  },
+  {
+    "example_id": "ขอโทษ_อายุเท่ากันหรือน้อยกว่า__ฉัน_var_1__ข้าว_var_1__กิน_var_1__ไป_var_2_no_space_1",
+    "source": "tsl51",
+    "reference": "ขอโทษ ฉัน ข้าว กิน ไป",
+    "hypothesis": "ขอโทษ ฉัน ข้าว กิน ไป",
+    "score": 0.8892498016357422
+  },
+  {
+    "example_id": "คุณ_var_1__เกิด_var_2__หูหนวก_var_2_no_space_0",
+    "source": "tsl51",
+    "reference": "คุณ เกิด หูหนวก",
+    "hypothesis": "คุณ เกิด หูหนวก",
+    "score": 0.8073666095733643
+  },
+  {
+    "example_id": "คุณ_var_1__ไป_var_2__ที่ไหน_var_1_no_space_2",
+    "source": "tsl51",
+    "reference": "คุณ ไป ที่ไหน",
+    "hypothesis": "คุณ ไป ที่ไหน",
+    "score": 0.5310919284820557
+  },
+  {
+    "example_id": "ฉัน_var_1__ข้าว_var_1__กิน_var_1_no_space_1",
+    "source": "tsl51",
+    "reference": "ฉัน ข้าว กิน",
+    "hypothesis": "ฉัน ข้าว กิน",
+    "score": 0.9957659244537354
+  },
+  {
+    "example_id": "ฉัน_var_2__เกิด_var_2__หูหนวก_var_2_no_space_2",
+    "source": "tsl51",
+    "reference": "ฉัน เกิด หูหนวก",
+    "hypothesis": "ฉัน เกิด หูหนวก",
+    "score": 0.8740285634994507
+  },
+  {
+    "example_id": "น้อง_var_1__ข้าว_var_1__กิน_var_1_no_space_1",
+    "source": "tsl51",
+    "reference": "น้อง ข้าว กิน",
+    "hypothesis": "น้อง ข้าว กิน",
+    "score": 0.9989081025123596
+  },
+  {
+    "example_id": "ภาษามือ_var_1__น้อง_var_1__เรียน_var_1_no_space_4",
+    "source": "tsl51",
+    "reference": "ภาษามือ น้อง เรียน",
+    "hypothesis": "ภาษามือ น้อง เรียน",
+    "score": 0.9931186437606812
+  },
+  {
+    "example_id": "ภาษามือ_var_1__น้อง_var_1__เรียน_var_1__ชอบ_var_1_no_space_2",
+    "source": "tsl51",
+    "reference": "ภาษามือ น้อง เรียน ชอบ",
+    "hypothesis": "ภาษามือ น้อง เรียน ชอบ",
+    "score": 0.9083543419837952
+  },
+  {
+    "example_id": "ภาษามือ_var_1__พี่_var_1__เรียน_var_1_no_space_4",
+    "source": "tsl51",
+    "reference": "ภาษามือ พี่ เรียน",
+    "hypothesis": "ภาษามือ พี่ เรียน",
+    "score": 0.7259078621864319
+  },
+  {
+    "example_id": "ยาย_var_1__ข้าว_var_1__กิน_var_1_no_space_1",
+    "source": "tsl51",
+    "reference": "ยาย ข้าว กิน",
+    "hypothesis": "ยาย ข้าว กิน",
+    "score": 0.9982154965400696
+  },
+  {
+    "example_id": "วันนี้_var_1__คุณ_var_1__ข้าว_var_1__กิน_var_1__ไป_var_2__ที่ไหน_var_1_no_space_1",
+    "source": "tsl51",
+    "reference": "วันนี้ คุณ ข้าว กิน ไป ที่ไหน",
+    "hypothesis": "วันนี้ คุณ ข้าว กิน ไป ที่ไหน",
+    "score": 0.9397109746932983
+  },
+  {
+    "example_id": "สวัสดี_อายุเท่ากันหรือน้อยกว่า__ฉัน_var_1__สบายดี_var_1_no_space_1",
+    "source": "tsl51",
+    "reference": "สวัสดี ฉัน สบายดี",
+    "hypothesis": "สวัสดี ฉัน สบายดี",
+    "score": 0.9974861741065979
+  },
+  {
+    "example_id": "สวัสดี_อายุเท่ากันหรือน้อยกว่า__ฉัน_var_1__สบายดี_var_1_no_space_2",
+    "source": "tsl51",
+    "reference": "สวัสดี ฉัน สบายดี",
+    "hypothesis": "สวัสดี ฉัน สบายดี",
+    "score": 0.9327512383460999
+  },
+  {
+    "example_id": "แฟน_var_1__ข้าว_var_1__กิน_var_1_no_space_1",
+    "source": "tsl51",
+    "reference": "แฟน ข้าว กิน",
+    "hypothesis": "แฟน ข้าว กิน",
+    "score": 0.9993476867675781
+  },
+  {
+    "example_id": "แม่_var_1__ข้าว_var_1__กิน_var_1_no_space_2",
+    "source": "tsl51",
+    "reference": "แม่ ข้าว กิน",
+    "hypothesis": "แม่ ข้าว กิน",
+    "score": 0.8346839547157288
+  },
+  {
+    "example_id": "ไข่_var_2__คุณ_var_1__กิน_var_1__ชอบ_var_1_no_space_0",
+    "source": "tsl51",
+    "reference": "ไข่ คุณ กิน ชอบ",
+    "hypothesis": "ไข่ คุณ กิน ชอบ",
+    "score": 0.7269114851951599
+  },
+  {
+    "example_id": "ไข่_var_2__แฟน_var_1__กิน_var_1__ชอบ_var_1_with_space_4",
+    "source": "tsl51",
+    "reference": "ไข่ แฟน กิน ชอบ",
+    "hypothesis": "ไข่ แฟน กิน ชอบ",
+    "score": 0.8181818127632141
+  },
+  {
+    "example_id": "ไข่_var_2__แม่_var_1__กิน_var_1__ชอบ_var_1_no_space_2",
+    "source": "tsl51",
+    "reference": "ไข่ แม่ กิน ชอบ",
+    "hypothesis": "ไข่ แม่ กิน ชอบ",
+    "score": 0.7991498708724976
+  }
+]

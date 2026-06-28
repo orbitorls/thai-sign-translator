@@ -1,0 +1,41 @@
+{
+  "overall": {
+    "train_examples": 227,
+    "val_examples": 25,
+    "unique_train_targets": 62,
+    "unique_val_targets": 24,
+    "target_overlap_count": 24,
+    "target_overlap_ratio": 1.0,
+    "train_examples_per_target": 3.6613,
+    "repeated_train_target_fraction": 1.0,
+    "video_overlap_count": 0,
+    "video_overlap_ids": []
+  },
+  "by_source": {
+    "tsl51": {
+      "train_examples": 227,
+      "val_examples": 25,
+      "unique_train_targets": 62,
+      "unique_val_targets": 24,
+      "target_overlap_count": 24,
+      "target_overlap_ratio": 1.0,
+      "train_examples_per_target": 3.6613,
+      "repeated_train_target_fraction": 1.0,
+      "video_overlap_count": 0,
+      "video_overlap_ids": []
+    }
+  },
+  "passed": true,
+  "failures": [],
+  "required_sources": [
+    "tsl51"
+  ],
+  "gated_sources": [
+    "tsl51"
+  ],
+  "thresholds": {
+    "max_video_overlap": 0,
+    "min_target_overlap_ratio": 0.05,
+    "min_train_examples_per_target": 1.25
+  }
+}

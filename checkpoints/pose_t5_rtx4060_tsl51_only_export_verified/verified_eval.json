@@ -1,0 +1,234 @@
+{
+  "chrf": 96.77,
+  "bleu": 97.73,
+  "exact_match": 23,
+  "exact_match_pct": 92.0,
+  "n": 25,
+  "mean_hyp_len": 16.8,
+  "export_dir": "/kaggle/working/phase2",
+  "data_roots": [
+    "data/tsl51_v3"
+  ],
+  "seed": 42,
+  "split_policy": "manifest",
+  "val_subset_size": 25,
+  "required_sources": [
+    "tsl51"
+  ],
+  "manifest_quality_sources": [
+    "tsl51"
+  ],
+  "eval_sources": [
+    "tsl51"
+  ],
+  "eval_source_fallbacks": [],
+  "decoding": {
+    "max_new_tokens": 72,
+    "beam_size": 5,
+    "no_repeat_ngram_size": 3,
+    "repetition_penalty": 1.5,
+    "length_penalty": 0.7
+  },
+  "source_metrics": {
+    "tsl51": {
+      "chrf": 96.77,
+      "bleu": 97.73,
+      "exact_match": 23,
+      "exact_match_pct": 92.0,
+      "n": 25,
+      "mean_hyp_len": 16.8
+    }
+  },
+  "source_counts": {
+    "tsl51": 25
+  },
+  "manifest_quality": {
+    "overall": {
+      "train_examples": 227,
+      "val_examples": 25,
+      "unique_train_targets": 62,
+      "unique_val_targets": 24,
+      "target_overlap_count": 24,
+      "target_overlap_ratio": 1.0,
+      "train_examples_per_target": 3.6613,
+      "repeated_train_target_fraction": 1.0,
+      "video_overlap_count": 0,
+      "video_overlap_ids": []
+    },
+    "by_source": {
+      "tsl51": {
+        "train_examples": 227,
+        "val_examples": 25,
+        "unique_train_targets": 62,
+        "unique_val_targets": 24,
+        "target_overlap_count": 24,
+        "target_overlap_ratio": 1.0,
+        "train_examples_per_target": 3.6613,
+        "repeated_train_target_fraction": 1.0,
+        "video_overlap_count": 0,
+        "video_overlap_ids": []
+      }
+    },
+    "passed": true,
+    "failures": [],
+    "required_sources": [
+      "tsl51"
+    ],
+    "gated_sources": [
+      "tsl51"
+    ],
+    "thresholds": {
+      "max_video_overlap": 0,
+      "min_target_overlap_ratio": 0.05,
+      "min_train_examples_per_target": 1.25
+    }
+  },
+  "promotion_status": {
+    "ready": true,
+    "failures": [],
+    "warnings": [],
+    "thresholds": {
+      "min_val_chrf": 80.0,
+      "min_val_exact_match_pct": 60.0,
+      "max_best_val_loss": null
+    },
+    "overall_metrics": {
+      "chrf": 96.77,
+      "bleu": 97.73,
+      "exact_match": 23,
+      "exact_match_pct": 92.0,
+      "n": 25,
+      "mean_hyp_len": 16.8,
+      "export_dir": "/kaggle/working/phase2",
+      "data_roots": [
+        "data/tsl51_v3"
+      ],
+      "seed": 42,
+      "split_policy": "manifest",
+      "val_subset_size": 25,
+      "required_sources": [
+        "tsl51"
+      ],
+      "manifest_quality_sources": [
+        "tsl51"
+      ],
+      "eval_sources": [
+        "tsl51"
+      ],
+      "eval_source_fallbacks": [],
+      "decoding": {
+        "max_new_tokens": 72,
+        "beam_size": 5,
+        "no_repeat_ngram_size": 3,
+        "repetition_penalty": 1.5,
+        "length_penalty": 0.7
+      },
+      "source_metrics": {
+        "tsl51": {
+          "chrf": 96.77,
+          "bleu": 97.73,
+          "exact_match": 23,
+          "exact_match_pct": 92.0,
+          "n": 25,
+          "mean_hyp_len": 16.8
+        }
+      },
+      "source_counts": {
+        "tsl51": 25
+      },
+      "manifest_quality": {
+        "overall": {
+          "train_examples": 227,
+          "val_examples": 25,
+          "unique_train_targets": 62,
+          "unique_val_targets": 24,
+          "target_overlap_count": 24,
+          "target_overlap_ratio": 1.0,
+          "train_examples_per_target": 3.6613,
+          "repeated_train_target_fraction": 1.0,
+          "video_overlap_count": 0,
+          "video_overlap_ids": []
+        },
+        "by_source": {
+          "tsl51": {
+            "train_examples": 227,
+            "val_examples": 25,
+            "unique_train_targets": 62,
+            "unique_val_targets": 24,
+            "target_overlap_count": 24,
+            "target_overlap_ratio": 1.0,
+            "train_examples_per_target": 3.6613,
+            "repeated_train_target_fraction": 1.0,
+            "video_overlap_count": 0,
+            "video_overlap_ids": []
+          }
+        },
+        "passed": true,
+        "failures": [],
+        "required_sources": [
+          "tsl51"
+        ],
+        "gated_sources": [
+          "tsl51"
+        ],
+        "thresholds": {
+          "max_video_overlap": 0,
+          "min_target_overlap_ratio": 0.05,
+          "min_train_examples_per_target": 1.25
+        }
+      }
+    },
+    "source_metrics": {
+      "tsl51": {
+        "chrf": 96.77,
+        "bleu": 97.73,
+        "exact_match": 23,
+        "exact_match_pct": 92.0,
+        "n": 25,
+        "mean_hyp_len": 16.8
+      }
+    },
+    "manifest_quality": {
+      "overall": {
+        "train_examples": 227,
+        "val_examples": 25,
+        "unique_train_targets": 62,
+        "unique_val_targets": 24,
+        "target_overlap_count": 24,
+        "target_overlap_ratio": 1.0,
+        "train_examples_per_target": 3.6613,
+        "repeated_train_target_fraction": 1.0,
+        "video_overlap_count": 0,
+        "video_overlap_ids": []
+      },
+      "by_source": {
+        "tsl51": {
+          "train_examples": 227,
+          "val_examples": 25,
+          "unique_train_targets": 62,
+          "unique_val_targets": 24,
+          "target_overlap_count": 24,
+          "target_overlap_ratio": 1.0,
+          "train_examples_per_target": 3.6613,
+          "repeated_train_target_fraction": 1.0,
+          "video_overlap_count": 0,
+          "video_overlap_ids": []
+        }
+      },
+      "passed": true,
+      "failures": [],
+      "required_sources": [
+        "tsl51"
+      ],
+      "gated_sources": [
+        "tsl51"
+      ],
+      "thresholds": {
+        "max_video_overlap": 0,
+        "min_target_overlap_ratio": 0.05,
+        "min_train_examples_per_target": 1.25
+      }
+    },
+    "train_metrics": {}
+  }
+}

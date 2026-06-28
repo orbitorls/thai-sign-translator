@@ -1,0 +1,66 @@
+{
+  "passed": true,
+  "raw": {
+    "passed": true,
+    "data_roots": [
+      "/kaggle/input/datasets/orbitorls/thai-sign-tsl51"
+    ],
+    "required_files": [
+      "manifest.csv"
+    ],
+    "expected_manifest_rows": 0,
+    "expected_resolved_examples": 0,
+    "expected_source_counts": {},
+    "aggregate_manifest_rows": 252,
+    "aggregate_resolved_examples": 252,
+    "aggregate_manifest_source_counts": {},
+    "aggregate_resolved_source_counts": {
+      "tsl51": 252
+    },
+    "roots": [
+      {
+        "data_root": "/kaggle/input/datasets/orbitorls/thai-sign-tsl51",
+        "missing_required_files": [],
+        "manifest_rows": 252,
+        "manifest_source_counts": {},
+        "resolved_examples": 252,
+        "resolved_source_counts": {
+          "tsl51": 252
+        }
+      }
+    ],
+    "failures": []
+  },
+  "staged": {
+    "passed": true,
+    "data_roots": [
+      "/kaggle/input/datasets/orbitorls/thai-sign-tsl51"
+    ],
+    "required_files": [
+      "manifest.csv"
+    ],
+    "expected_manifest_rows": 0,
+    "expected_resolved_examples": 0,
+    "expected_source_counts": {},
+    "aggregate_manifest_rows": 252,
+    "aggregate_resolved_examples": 252,
+    "aggregate_manifest_source_counts": {},
+    "aggregate_resolved_source_counts": {
+      "tsl51": 252
+    },
+    "roots": [
+      {
+        "data_root": "/kaggle/input/datasets/orbitorls/thai-sign-tsl51",
+        "missing_required_files": [],
+        "manifest_rows": 252,
+        "manifest_source_counts": {},
+        "resolved_examples": 252,
+        "resolved_source_counts": {
+          "tsl51": 252
+        }
+      }
+    ],
+    "failures": []
+  },
+  "failures": []
+}

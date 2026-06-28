@@ -1,0 +1,9 @@
+{
+  "phase": "early_stopping",
+  "global_step": 5575,
+  "epoch": 119,
+  "initial_step": 5200,
+  "start_epoch": 93,
+  "stopped_reason": "early_stopping",
+  "updated_at_unix": 1782154749.383642
+}
