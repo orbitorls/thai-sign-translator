@@ -247,7 +247,7 @@ function AppShell() {
                     ? `🤲 ${th.cameraLive}`
                     : th.cameraLive}
               </span>
-              {!modelsLoading && <ModelPicker />}
+              <ModelPicker />
               <button className="glass-chip" onClick={() => setPhrasesOpen((v) => !v)} aria-expanded={phrasesOpen}>
                 {th.supportedPhrasesTitle}
               </button>

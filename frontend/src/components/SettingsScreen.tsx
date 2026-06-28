@@ -1,76 +1,201 @@
-import React from "react";
+import React, { useState } from "react";
 import { useSettings } from "../hooks/SettingsProvider";
 import { useHistory } from "../hooks/HistoryProvider";
-import { useI18n } from "../i18n";
+import { useConsent } from "../hooks/useConsent";
+import { useT } from "../i18n";
+import { Toggle } from "./settings/Toggle";
+import { ModelPicker } from "./ModelPicker";
+import { PrivacyScreen } from "./PrivacyScreen";
+import { ConfirmModal } from "./ui/ConfirmModal";
+import type { ConsentScope } from "../privacy/consentStorage";
 
-const stroke = {
-  fill: "none" as const,
-  stroke: "currentColor",
-  strokeWidth: 2,
-  strokeLinecap: "round" as const,
-  strokeLinejoin: "round" as const,
-};
+interface SettingsScreenProps {
+  onOpenPrivacy?: () => void;
+}
 
-export function SettingsScreen() {
-  const { lang, setLang, showLandmarks, setShowLandmarks } = useSettings();
+function SettingsDivider() {
+  return <div className="settings-divider" role="separator" aria-hidden="true" />;
+}
+
+function SettingsControl({ children }: { children: React.ReactNode }) {
+  return <div className="settings-control">{children}</div>;
+}
+
+export function SettingsScreen({ onOpenPrivacy }: SettingsScreenProps) {
+  const { t } = useT();
+  const { settings, update, reset, setLang, setShowLandmarks, lang, showLandmarks } = useSettings();
   const { clear } = useHistory();
-  const th = useI18n();
+  const { hasScope, setScope } = useConsent();
+  const [view, setView] = useState<"main" | "privacy">("main");
+  const [confirmOpen, setConfirmOpen] = useState(false);
+
+  if (view === "privacy") {
+    return <PrivacyScreen onBack={() => setView("main")} />;
+  }
+
+  const consentRows: { scope: ConsentScope; label: string }[] = [
+    { scope: "model_improvement", label: t.consentModelTitle },
+    { scope: "video_research", label: t.consentVideoTitle },
+    { scope: "academic_publication", label: t.consentAcademicTitle },
+  ];
 
   return (
     <div className="screen-sheet">
-      <h2 className="sheet-title" style={{ marginBottom: "var(--space-5)" }}>
-        {th.settingsTitle}
-      </h2>
+      <h2 className="sheet-title settings-page-title">{t.settingsTitle}</h2>
+
       <div className="settings-list">
-        {/* Language */}
         <div className="settings-row">
-          <svg viewBox="0 0 24 24" aria-hidden="true" {...stroke}>
-            <circle cx="12" cy="12" r="10" />
-            <line x1="2" y1="12" x2="22" y2="12" />
-            <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
-          </svg>
-          <span className="settings-label">{th.settingsLanguage}</span>
-          <div className="seg">
-            <button type="button" className={lang === "th" ? "on" : ""} onClick={() => setLang("th")} aria-pressed={lang === "th"}>
-              ไทย
-            </button>
-            <button type="button" className={lang === "en" ? "on" : ""} onClick={() => setLang("en")} aria-pressed={lang === "en"}>
-              EN
-            </button>
+          <span className="settings-label">{t.modelLabel}</span>
+          <SettingsControl>
+            <ModelPicker className="glass-chip settings-select" />
+          </SettingsControl>
+        </div>
+
+        <div className="settings-row">
+          <span className="settings-label">{t.settingsLanguage}</span>
+          <SettingsControl>
+            <div className="seg seg--settings" role="group" aria-label={t.settingsLanguage}>
+              <button type="button" className={lang === "th" ? "on" : ""} onClick={() => setLang("th")} aria-pressed={lang === "th"}>
+                ไทย
+              </button>
+              <button type="button" className={lang === "en" ? "on" : ""} onClick={() => setLang("en")} aria-pressed={lang === "en"}>
+                EN
+              </button>
+            </div>
+          </SettingsControl>
+        </div>
+
+        <SettingsDivider />
+
+        <div className="settings-row">
+          <span className="settings-label">{t.settingsLandmarks}</span>
+          <SettingsControl>
+            <Toggle
+              id="landmarks"
+              checked={showLandmarks}
+              onChange={setShowLandmarks}
+              aria-label={t.settingsLandmarks}
+            />
+          </SettingsControl>
+        </div>
+
+        <div className="settings-row">
+          <span className="settings-label">{t.cameraFacingLabel}</span>
+          <SettingsControl>
+            <div className="seg seg--settings" role="group" aria-label={t.cameraFacingLabel}>
+              <button
+                type="button"
+                className={settings.cameraFacing === "user" ? "on" : ""}
+                onClick={() => update("cameraFacing", "user")}
+                aria-pressed={settings.cameraFacing === "user"}
+              >
+                {t.cameraFacingUser}
+              </button>
+              <button
+                type="button"
+                className={settings.cameraFacing === "environment" ? "on" : ""}
+                onClick={() => update("cameraFacing", "environment")}
+                aria-pressed={settings.cameraFacing === "environment"}
+              >
+                {t.cameraFacingEnvironment}
+              </button>
+            </div>
+          </SettingsControl>
+        </div>
+
+        <SettingsDivider />
+
+        <div className="settings-row">
+          <span className="settings-label">{t.diagnosticsEnabledLabel}</span>
+          <SettingsControl>
+            <Toggle
+              id="diagnostics"
+              checked={settings.diagnosticsEnabled}
+              onChange={(v) => update("diagnosticsEnabled", v)}
+              aria-label={t.diagnosticsEnabledLabel}
+            />
+          </SettingsControl>
+        </div>
+
+        <div className="settings-row">
+          <span className="settings-label">{t.speakAloud}</span>
+          <SettingsControl>
+            <Toggle
+              id="speak-aloud"
+              checked={settings.speakAloud}
+              onChange={(v) => update("speakAloud", v)}
+              aria-label={t.speakAloud}
+            />
+          </SettingsControl>
+        </div>
+
+        <div className="settings-row">
+          <span className="settings-label">{t.transcriptFontSize}</span>
+          <SettingsControl>
+            <select
+              className="glass-chip settings-select"
+              value={settings.fontSize}
+              onChange={(e) => update("fontSize", e.target.value as typeof settings.fontSize)}
+              aria-label={t.transcriptFontSize}
+            >
+              <option value="small">{t.fontSizeSmall}</option>
+              <option value="medium">{t.fontSizeMedium}</option>
+              <option value="large">{t.fontSizeLarge}</option>
+            </select>
+          </SettingsControl>
+        </div>
+
+        <SettingsDivider />
+
+        {consentRows.map((row) => (
+          <div key={row.scope} className="settings-row">
+            <span className="settings-label">{row.label}</span>
+            <SettingsControl>
+              <Toggle
+                id={`consent-${row.scope}`}
+                checked={hasScope(row.scope)}
+                onChange={(v) => void setScope(row.scope, v)}
+                aria-label={row.label}
+              />
+            </SettingsControl>
           </div>
-        </div>
+        ))}
 
-        {/* Landmarks toggle */}
-        <div className="settings-row">
-          <svg viewBox="0 0 24 24" aria-hidden="true" {...stroke}>
-            <polygon points="12 2 15 9 22 9 16 14 18 21 12 17 6 21 8 14 2 9 9 9" />
-          </svg>
-          <span className="settings-label">{th.settingsLandmarks}</span>
-          <button
-            type="button"
-            role="switch"
-            aria-checked={showLandmarks}
-            aria-label={th.settingsLandmarks}
-            className={`toggle${showLandmarks ? " on" : ""}`}
-            onClick={() => setShowLandmarks(!showLandmarks)}
-          />
-        </div>
+        <SettingsDivider />
 
-        {/* Clear history */}
         <button
           type="button"
           className="settings-row settings-action"
           onClick={() => {
-            if (window.confirm(th.confirmClear)) clear();
+            onOpenPrivacy?.();
+            setView("privacy");
           }}
         >
-          <svg viewBox="0 0 24 24" aria-hidden="true" {...stroke}>
-            <polyline points="3 6 5 6 21 6" />
-            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-          </svg>
-          <span className="settings-label">{th.settingsClearHistory}</span>
+          <span className="settings-label">{t.privacyPolicy}</span>
+          <span className="settings-chevron" aria-hidden="true">›</span>
+        </button>
+
+        <button
+          type="button"
+          className="settings-row settings-action settings-action--muted"
+          onClick={() => setConfirmOpen(true)}
+        >
+          <span className="settings-label">{t.settingsClearHistory}</span>
+        </button>
+
+        <button type="button" className="settings-row settings-action settings-action--muted" onClick={reset}>
+          <span className="settings-label">{t.resetToDefaults}</span>
         </button>
       </div>
+
+      <ConfirmModal
+        open={confirmOpen}
+        title={t.settingsClearHistory}
+        message={t.confirmClear}
+        onConfirm={() => { clear(); setConfirmOpen(false); }}
+        onCancel={() => setConfirmOpen(false)}
+        danger
+      />
     </div>
   );
 }

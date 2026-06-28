@@ -1,8 +1,9 @@
-import React from "react";
+import React, { useState } from "react";
 import { useHistory } from "../hooks/HistoryProvider";
 import { useSpeech } from "../hooks/useSpeech";
 import { useSettings } from "../hooks/SettingsProvider";
 import { useI18n } from "../i18n";
+import { ConfirmModal } from "./ui/ConfirmModal";
 
 const stroke = {
   fill: "none" as const,
@@ -29,6 +30,7 @@ export function HistoryScreen() {
   const { speak } = useSpeech();
   const { lang } = useSettings();
   const th = useI18n();
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   return (
     <div className="screen-sheet">
@@ -38,9 +40,7 @@ export function HistoryScreen() {
           <button
             type="button"
             className="glass-chip"
-            onClick={() => {
-              if (window.confirm(th.confirmClear)) clear();
-            }}
+            onClick={() => setConfirmOpen(true)}
           >
             ✕ {th.settingsClearHistory}
           </button>
@@ -74,6 +74,15 @@ export function HistoryScreen() {
           ))}
         </ul>
       )}
+
+      <ConfirmModal
+        open={confirmOpen}
+        title={th.settingsClearHistory}
+        message={th.confirmClear}
+        onConfirm={() => { clear(); setConfirmOpen(false); }}
+        onCancel={() => setConfirmOpen(false)}
+        danger
+      />
     </div>
   );
 }

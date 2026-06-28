@@ -1,77 +1,53 @@
 import React from "react";
-import { ModelInfo } from "../api/client";
-import { th } from "../i18n/th";
+import { useModels } from "../hooks/ModelsProvider";
+import { useI18n } from "../i18n";
 
 interface ModelPickerProps {
-  models: ModelInfo[];
-  selectedId: string | null;
-  onChange: (id: string) => void;
-  disabled?: boolean;
+  className?: string;
 }
 
-export function ModelPicker({ models, selectedId, onChange, disabled }: ModelPickerProps) {
-  if (models.length === 0) return null;
+export function ModelPicker({ className }: ModelPickerProps) {
+  const th = useI18n();
+  const { models, selectedModelId, loading, error, setSelectedModelId } = useModels();
+
+  if (loading) {
+    return (
+      <span
+        className={className ?? "glass-chip model-picker-select"}
+        aria-label={th.modelLoading}
+        aria-busy="true"
+        style={{ opacity: 0.6, cursor: "default", userSelect: "none" }}
+      >
+        {th.modelLoading}
+      </span>
+    );
+  }
+
+  if (error || models.length === 0) {
+    return (
+      <span
+        className={className ?? "glass-chip model-picker-select"}
+        aria-label={th.modelLoadError}
+        style={{ cursor: "default", userSelect: "none" }}
+      >
+        <span className="glass-text-warn">{th.modelLoadError}</span>
+      </span>
+    );
+  }
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-2)" }}>
-      <label
-        htmlFor="model-picker"
-        style={{
-          fontSize: "var(--font-size-sm)",
-          fontWeight: 600,
-          color: "var(--color-text)",
-        }}
-      >
-        {th.modelLabel}
-      </label>
-      <div
-        style={{
-          display: "grid",
-          gap: "var(--space-2)",
-          padding: "var(--space-2)",
-          border: "1px solid var(--color-border)",
-          borderRadius: "var(--radius-lg)",
-          background: "var(--color-surface-soft)",
-        }}
-      >
-        {models.map((m) => {
-          const isSelected = m.id === selectedId;
-          const isAvailable = m.available;
-          return (
-            <button
-              key={m.id}
-              id={m.id === models[0]?.id ? "model-picker" : undefined}
-              onClick={() => isAvailable && onChange(m.id)}
-              disabled={!isAvailable || disabled}
-              aria-pressed={isSelected}
-              title={!isAvailable ? th.modelUnavailable : undefined}
-              style={{
-                padding: "var(--space-3) var(--space-4)",
-                borderRadius: "var(--radius-md)",
-                border: `1px solid ${isSelected ? "var(--color-primary)" : "transparent"}`,
-                background: isSelected ? "var(--color-primary)" : "var(--color-surface)",
-                color: isSelected ? "#fff" : isAvailable ? "var(--color-text)" : "var(--color-text-placeholder)",
-                fontFamily: "var(--font-family)",
-                fontSize: "var(--font-size-sm)",
-                fontWeight: isSelected ? 600 : 400,
-                cursor: isAvailable && !disabled ? "pointer" : "not-allowed",
-                opacity: isAvailable ? 1 : 0.45,
-                transition: "var(--transition)",
-                textAlign: "left",
-                minHeight: "44px",
-                boxShadow: isSelected ? "var(--shadow-sm)" : "none",
-              }}
-            >
-              {m.label_th}
-              {!isAvailable && (
-                <span style={{ marginLeft: "var(--space-2)", fontSize: "var(--font-size-xs)" }}>
-                  ({th.modelUnavailable})
-                </span>
-              )}
-            </button>
-          );
-        })}
-      </div>
-    </div>
+    <select
+      className={className ?? "glass-chip model-picker-select"}
+      value={selectedModelId ?? ""}
+      onChange={(e) => setSelectedModelId(e.target.value || null)}
+      aria-label={th.modelLabel}
+    >
+      {models.map((m) => (
+        <option key={m.id} value={m.id} disabled={!m.available}>
+          {m.label_th}
+          {!m.available ? ` (${th.modelUnavailable})` : ""}
+        </option>
+      ))}
+    </select>
   );
 }
