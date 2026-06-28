@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from "react";
 import { getSupportedPhrases, SupportedPhrasesResult } from "../api/client";
-import { th } from "../i18n/th";
+import { useI18n } from "../i18n";
 
 interface SupportedPhrasesProps {
   glass?: boolean;
 }
 
 export function SupportedPhrases({ glass }: SupportedPhrasesProps) {
+  const th = useI18n();
   const [data, setData] = useState<SupportedPhrasesResult | null>(null);
   const [error, setError] = useState(false);
   const [open, setOpen] = useState(false);

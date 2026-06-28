@@ -7,7 +7,7 @@ import { useTranslate } from "./hooks/useTranslate";
 import { CameraView } from "./components/CameraView";
 import { ResultCard } from "./components/ResultCard";
 import { SupportedPhrases } from "./components/SupportedPhrases";
-import { th } from "./i18n/th";
+import { useI18n } from "./i18n";
 
 const CONFIDENCE_FLOOR = 0.3;
 const HANDS_GONE_DEBOUNCE_MS = 800;
@@ -15,6 +15,7 @@ const MIN_HAND_FRAMES = 6;
 const MIN_TOTAL_FRAMES = 8;
 
 function Translator() {
+  const th = useI18n();
   const { models, selectedModelId, loading: modelsLoading, error: modelsError, setSelectedModelId } = useModels();
   const [showLandmarks, setShowLandmarks] = useState(false);
   const capture = useHolisticCapture({ overlayEnabled: showLandmarks });
@@ -97,7 +98,7 @@ function Translator() {
       {/* ── Top glass bar ── */}
       <div className="glass-top-bar">
         <div className="brand-glass">
-          <div className="brand-mark-glass">TS</div>
+          <div className="brand-mark-glass">{th.brandShort}</div>
           <span className="brand-name-glass">{th.appTitle}</span>
         </div>
 
@@ -112,7 +113,7 @@ function Translator() {
                 .filter(Boolean)
                 .join(" ")}
             />
-            {capture.ready ? "กล้อง Live" : "กำลังเปิด..."}
+            {capture.ready ? th.cameraLive : th.cameraOpening}
           </span>
 
           {!modelsLoading && selectedModel && (
@@ -200,6 +201,7 @@ interface LiveStatusRowProps {
 }
 
 function LiveStatusRow({ cameraReady, translating, hasResult, hasError, modelsError }: LiveStatusRowProps) {
+  const th = useI18n();
   let label = "";
   let color = "rgba(255,255,255,0.5)";
 
@@ -213,7 +215,7 @@ function LiveStatusRow({ cameraReady, translating, hasResult, hasError, modelsEr
   } else if (translating) {
     label = th.translating;
   } else if (!hasResult) {
-    label = "แสดงภาษามือต่อกล้อง";
+    label = th.showSignHint;
   }
 
   if (!label) return null;
