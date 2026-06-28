@@ -1,0 +1,15 @@
+{
+  "min_samples": 20,
+  "schedule_hours": 24,
+  "max_frames": 180,
+  "reload_after_promote": true,
+  "fine_tune": {
+    "learning_rate": 5e-6,
+    "max_steps": 500,
+    "early_stopping_patience": 3
+  },
+  "data_roots": "data/tsl51_v3,data/youtube_sl25_thai_v3,data/user_contributions",
+  "train_config": "configs/train/pose_t5_user_feedback.yaml",
+  "model_config": "configs/model/pose_t5_tsl51_tune3.json",
+  "resume_from": "checkpoints/pose_t5_rtx4060_tsl51_only_export_verified"
+}

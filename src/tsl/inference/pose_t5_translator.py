@@ -14,6 +14,12 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 
+from tsl.inference.confidence import (
+    LOW_LANDMARK_QUALITY_THRESHOLD,
+    composite_confidence,
+    landmark_quality_score,
+    trim_low_quality_runs,
+)
 from tsl.models.pose_t5 import PoseToTextT5
 
 
@@ -27,6 +33,9 @@ class PoseT5Prediction:
     sentence: str
     token_ids: list[int]
     score: float
+    token_score: float = 0.0
+    landmark_quality: float = 1.0
+    warning: str | None = None
 
 
 class PoseT5Translator:
@@ -94,6 +103,7 @@ class PoseT5Translator:
         no_repeat_ngram_size: int = DEFAULT_NO_REPEAT_NGRAM_SIZE,
         repetition_penalty: float = DEFAULT_REPETITION_PENALTY,
         length_penalty: float = DEFAULT_LENGTH_PENALTY,
+        weights: np.ndarray | None = None,
     ) -> PoseT5Prediction:
         """Translate a single ``(T, 312)`` feature array to Thai text.
 
@@ -116,6 +126,7 @@ class PoseT5Translator:
             no_repeat_ngram_size=no_repeat_ngram_size,
             repetition_penalty=repetition_penalty,
             length_penalty=length_penalty,
+            weights_batch=[weights],
         )[0]
 
     @torch.no_grad()
@@ -127,17 +138,24 @@ class PoseT5Translator:
         no_repeat_ngram_size: int | None = DEFAULT_NO_REPEAT_NGRAM_SIZE,
         repetition_penalty: float | None = DEFAULT_REPETITION_PENALTY,
         length_penalty: float | None = DEFAULT_LENGTH_PENALTY,
+        weights_batch: list[np.ndarray | None] | None = None,
     ) -> list[PoseT5Prediction]:
         """Translate multiple ``(T, 312)`` feature arrays in one generation call."""
         if not features_batch:
             return []
 
+        if weights_batch is None:
+            weights_batch = [None] * len(features_batch)
+        if len(weights_batch) != len(features_batch):
+            raise ValueError("weights_batch must align with features_batch")
+
         results: list[PoseT5Prediction | None] = [None] * len(features_batch)
         active_rows: list[int] = []
         active_features: list[np.ndarray] = []
         active_lengths: list[int] = []
+        active_landmark_quality: list[float] = []
 
-        for row_idx, features in enumerate(features_batch):
+        for row_idx, (features, weights) in enumerate(zip(features_batch, weights_batch)):
             if features.ndim != 2:
                 raise ValueError(
                     f"features must be 2-D (T, 312); got shape {tuple(features.shape)}"
@@ -146,9 +164,39 @@ class PoseT5Translator:
             if T == 0:
                 results[row_idx] = PoseT5Prediction(sentence="", token_ids=[], score=0.0)
                 continue
+
+            clip_weights = weights
+            clip_features = features
+            if clip_weights is not None:
+                clip_features, clip_weights = trim_low_quality_runs(clip_features, clip_weights)
+                if clip_features.shape[0] == 0:
+                    results[row_idx] = PoseT5Prediction(
+                        sentence="",
+                        token_ids=[],
+                        score=0.0,
+                        token_score=0.0,
+                        landmark_quality=0.0,
+                        warning="low_landmark_quality",
+                    )
+                    continue
+                quality = landmark_quality_score(clip_weights)
+                if quality < LOW_LANDMARK_QUALITY_THRESHOLD:
+                    results[row_idx] = PoseT5Prediction(
+                        sentence="",
+                        token_ids=[],
+                        score=0.0,
+                        token_score=0.0,
+                        landmark_quality=quality,
+                        warning="low_landmark_quality",
+                    )
+                    continue
+            else:
+                quality = 1.0
+
             active_rows.append(row_idx)
-            active_features.append(features)
-            active_lengths.append(T)
+            active_features.append(clip_features)
+            active_lengths.append(int(clip_features.shape[0]))
+            active_landmark_quality.append(quality)
 
         if active_features:
             max_T = max(active_lengths)
@@ -192,9 +240,21 @@ class PoseT5Translator:
             token_ids_batch = [generated[idx].tolist() for idx in range(generated.shape[0])]
             scores = self._score_sequences(src, src_lengths, token_ids_batch)
 
-            for row_idx, ids, score in zip(active_rows, token_ids_batch, scores):
+            for row_idx, ids, token_score, landmark_quality in zip(
+                active_rows,
+                token_ids_batch,
+                scores,
+                active_landmark_quality,
+            ):
                 sentence = self.tokenizer.decode(ids, skip_special_tokens=True)
-                results[row_idx] = PoseT5Prediction(sentence=sentence, token_ids=ids, score=score)
+                composite = composite_confidence(token_score, landmark_quality)
+                results[row_idx] = PoseT5Prediction(
+                    sentence=sentence,
+                    token_ids=ids,
+                    score=composite,
+                    token_score=float(token_score),
+                    landmark_quality=float(landmark_quality),
+                )
 
         return [pred for pred in results if pred is not None]
 

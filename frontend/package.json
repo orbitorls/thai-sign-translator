@@ -1,6 +1,6 @@
 {
   "name": "thai-sign-translator-ui",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -11,12 +11,16 @@
   "dependencies": {
     "@mediapipe/tasks-vision": "^0.10.35",
     "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^7.18.0"
   },
   "devDependencies": {
     "@types/react": "^18.3.1",
     "@types/react-dom": "^18.3.1",
     "@vitejs/plugin-react": "^4.3.4",
+    "autoprefixer": "^10.5.2",
+    "postcss": "^8.5.15",
+    "tailwindcss": "^3.4.19",
     "typescript": "^5.5.3",
     "vite": "^5.4.2"
   }

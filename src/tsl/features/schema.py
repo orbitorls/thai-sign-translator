@@ -5,6 +5,7 @@ from dataclasses import dataclass
 
 
 RAW_MEDIAPIPE_543X3 = "raw_mediapipe_543x3"
+RAW_MEDIAPIPE_543X4 = "raw_mediapipe_543x4"
 SELECTED_312 = "selected_312"
 TSL51_162 = "tsl51_162"
 
@@ -27,6 +28,17 @@ _SCHEMAS: dict[str, FeatureSchema] = {
         description="Raw MediaPipe Holistic landmarks with shape (T, 543, 3).",
         landmark_count=543,
         coord_dim=3,
+    ),
+    RAW_MEDIAPIPE_543X4: FeatureSchema(
+        schema_id=RAW_MEDIAPIPE_543X4,
+        rank=3,
+        frame_dim=None,
+        description=(
+            "Raw MediaPipe Holistic landmarks with shape (T, 543, 4); "
+            "the fourth channel is visibility/presence weight."
+        ),
+        landmark_count=543,
+        coord_dim=4,
     ),
     SELECTED_312: FeatureSchema(
         schema_id=SELECTED_312,
@@ -66,6 +78,7 @@ def infer_feature_schema_from_input_dim(input_dim: int) -> str:
 __all__ = [
     "FeatureSchema",
     "RAW_MEDIAPIPE_543X3",
+    "RAW_MEDIAPIPE_543X4",
     "SELECTED_312",
     "TSL51_162",
     "get_feature_schema",
