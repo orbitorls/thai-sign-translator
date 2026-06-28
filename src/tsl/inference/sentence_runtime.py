@@ -9,6 +9,7 @@ import config
 from tsl.features.normalize import normalize_sequence
 from tsl.features.schema import (
     RAW_MEDIAPIPE_543X3,
+    RAW_MEDIAPIPE_543X4,
     SELECTED_312,
     get_feature_schema,
 )
@@ -81,8 +82,8 @@ class SentenceRuntime:
         requested = get_feature_schema(feature_schema)
         model_schema = get_feature_schema(self.model_metadata.feature_schema_id)
 
-        if requested.schema_id == RAW_MEDIAPIPE_543X3:
-            raw = self._validate_raw_mediapipe(arr)
+        if requested.schema_id in (RAW_MEDIAPIPE_543X3, RAW_MEDIAPIPE_543X4):
+            raw = self._validate_raw_mediapipe(arr, requested.schema_id)
             if model_schema.schema_id == SELECTED_312:
                 features = normalize_sequence(raw)
             elif model_schema.schema_id == RAW_MEDIAPIPE_543X3:
@@ -121,14 +122,15 @@ class SentenceRuntime:
             )
         return features.astype(np.float32, copy=False)
 
-    def _validate_raw_mediapipe(self, arr: np.ndarray) -> np.ndarray:
-        expected_shape = (config.N_LANDMARKS, 3)
+    def _validate_raw_mediapipe(self, arr: np.ndarray, schema_id: str) -> np.ndarray:
+        coord_dim = 4 if schema_id == RAW_MEDIAPIPE_543X4 else 3
+        expected_shape = (config.N_LANDMARKS, coord_dim)
         if arr.ndim != 3 or tuple(arr.shape[1:]) != expected_shape:
             raise ValueError(
-                "frames for feature_schema='raw_mediapipe_543x3' must have shape "
-                f"(T, {config.N_LANDMARKS}, 3); got {tuple(arr.shape)}"
+                f"frames for feature_schema={schema_id!r} must have shape "
+                f"(T, {config.N_LANDMARKS}, {coord_dim}); got {tuple(arr.shape)}"
             )
-        return arr
+        return arr[:, :, :3] if coord_dim == 4 else arr
 
     def _validate_flat_features(
         self,

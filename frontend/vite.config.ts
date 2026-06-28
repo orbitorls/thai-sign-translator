@@ -6,6 +6,10 @@ export default defineConfig({
   server: {
     proxy: {
       "/translate": "http://127.0.0.1:8000",
+      "/ws": {
+        target: "ws://127.0.0.1:8000",
+        ws: true,
+      },
       "/models": "http://127.0.0.1:8000",
       "/signs": "http://127.0.0.1:8000",
       "/supported-phrases": "http://127.0.0.1:8000",
