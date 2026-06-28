@@ -8,9 +8,27 @@ export const en = {
 
   // Navigation
   navTranslator: "Translator",
+  navCamera: "Translate",
   navDictionary: "Dictionary",
   navHistory: "History",
   navSettings: "Settings",
+  brandShort: "CB",
+  cameraLive: "Camera Live",
+  cameraOpening: "Opening...",
+  showSignHint: "Show signs to the camera",
+  settingsTitle: "Settings",
+  settingsLanguage: "Language",
+  settingsLandmarks: "Skeleton overlay",
+  settingsClearHistory: "Clear history",
+  confirmClear: "Clear all history?",
+  historyTitle: "History",
+  close: "Close",
+  ariaSpeak: "Listen",
+  speaking: "Speaking…",
+  timeJustNow: "Just now",
+  timeMinutesAgo: (n: number) => `${n} min ago`,
+  timeHoursAgo: (n: number) => `${n} hr ago`,
+  timeDaysAgo: (n: number) => `${n} days ago`,
   startTranslating: "Start Translating",
 
   // Camera states
@@ -19,6 +37,7 @@ export const en = {
   cameraConnected: "Camera Connected",
   cameraError: "Camera not accessible",
   cameraErrorHint: "Please allow camera access in your browser",
+  cameraRetry: "Retry",
   cameraRegionLabel: "Sign language camera viewfinder",
   cameraSectionLabel: "Camera and recording controls",
   viewfinderHint: "Position your upper body and hands inside the frame",
@@ -133,6 +152,7 @@ export const en = {
   autoScrollDesc: "Keep the latest translation visible at the bottom.",
   transcriptFontSize: "Transcript Font Size",
   saveChanges: "Save Changes",
+  confirm: "Confirm",
   cancel: "Cancel",
 
   // Footer
@@ -167,7 +187,7 @@ export const en = {
   clearSearch: "Clear search",
 
   // Feedback / teach
-  navTeach: "Teach Model",
+  navTeach: "Teach",
   feedbackOptInTitle: "Help Improve the Model",
   feedbackOptInLabel: "Share pose data for model training",
   feedbackOptInDesc:

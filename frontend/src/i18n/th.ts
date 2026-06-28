@@ -8,9 +8,27 @@ export const th = {
 
   // Navigation
   navTranslator: "ตัวแปล",
+  navCamera: "แปล",
   navDictionary: "พจนานุกรม",
   navHistory: "ประวัติ",
   navSettings: "ตั้งค่า",
+  brandShort: "วท",
+  cameraLive: "กล้อง Live",
+  cameraOpening: "กำลังเปิด...",
+  showSignHint: "แสดงภาษามือต่อกล้อง",
+  settingsTitle: "ตั้งค่า",
+  settingsLanguage: "ภาษา",
+  settingsLandmarks: "เส้นโครงร่าง",
+  settingsClearHistory: "ล้างประวัติ",
+  confirmClear: "ล้างประวัติทั้งหมด?",
+  historyTitle: "ประวัติ",
+  close: "ปิด",
+  ariaSpeak: "ฟังเสียงอ่าน",
+  speaking: "กำลังพูด…",
+  timeJustNow: "เมื่อสักครู่",
+  timeMinutesAgo: (n: number) => `${n} นาทีที่แล้ว`,
+  timeHoursAgo: (n: number) => `${n} ชั่วโมงที่แล้ว`,
+  timeDaysAgo: (n: number) => `${n} วันที่แล้ว`,
   startTranslating: "เริ่มแปล",
 
   // Camera states
@@ -19,6 +37,7 @@ export const th = {
   cameraConnected: "กล้องเชื่อมต่อแล้ว",
   cameraError: "ไม่สามารถเข้าถึงกล้องได้",
   cameraErrorHint: "กรุณาอนุญาตการใช้กล้องในเบราว์เซอร์",
+  cameraRetry: "ลองใหม่",
   cameraRegionLabel: "กล้องแปลภาษามือ",
   cameraSectionLabel: "กล้องและปุ่มบันทึก",
   viewfinderHint: "จัดตำแหน่งลำตัวและมือให้อยู่ในกรอบ",
@@ -131,6 +150,7 @@ export const th = {
   autoScrollDesc: "แสดงผลลัพธ์ล่าสุดที่ด้านล่างเสมอ",
   transcriptFontSize: "ขนาดตัวอักษรผลลัพธ์",
   saveChanges: "บันทึกการตั้งค่า",
+  confirm: "ยืนยัน",
   cancel: "ยกเลิก",
 
   // Footer
@@ -165,7 +185,7 @@ export const th = {
   clearSearch: "ล้างการค้นหา",
 
   // Feedback / teach
-  navTeach: "สอนโมเดล",
+  navTeach: "สอน",
   feedbackOptInTitle: "ช่วยปรับปรุงโมเดล",
   feedbackOptInLabel: "แชร์ข้อมูลท่าทางเพื่อฝึกโมเดล",
   feedbackOptInDesc:
