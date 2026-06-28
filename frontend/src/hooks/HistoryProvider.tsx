@@ -1,4 +1,11 @@
-import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from "react";
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+  ReactNode,
+} from "react";
 
 export interface HistoryItem {
   id: string;
@@ -8,7 +15,16 @@ export interface HistoryItem {
   ts: number;
 }
 
-const STORAGE_KEY = "tsl.history.v1";
+export interface HistoryEntry {
+  id: string;
+  timeISO: string;
+  sentence: string;
+  score: number;
+  model: string;
+  chips: string[];
+}
+
+const STORAGE_KEY = "tsl.history.v2";
 const CAP = 100;
 const DEDUP_WINDOW_MS = 30_000;
 
@@ -28,15 +44,32 @@ function genId(): string {
   return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 }
 
+function toEntry(item: HistoryItem): HistoryEntry {
+  return {
+    id: item.id,
+    timeISO: new Date(item.ts).toISOString(),
+    sentence: item.sentence,
+    score: item.score,
+    model: item.model,
+    chips: [],
+  };
+}
+
 interface HistoryContextValue {
   items: HistoryItem[];
+  entries: HistoryEntry[];
   add: (entry: { sentence: string; score: number; model: string }) => void;
+  addEntry: (entry: Omit<HistoryEntry, "id" | "timeISO">) => void;
+  removeEntry: (id: string) => void;
   clear: () => void;
 }
 
 const HistoryContext = createContext<HistoryContextValue>({
   items: [],
+  entries: [],
   add: () => {},
+  addEntry: () => {},
+  removeEntry: () => {},
   clear: () => {},
 });
 
@@ -54,7 +87,6 @@ export function HistoryProvider({ children }: { children: ReactNode }) {
   const add = useCallback((entry: { sentence: string; score: number; model: string }) => {
     setItems((prev) => {
       const last = prev[0];
-      // Dedup: skip identical sentence within the dedup window (auto-loop fires repeatedly).
       if (last && last.sentence === entry.sentence && Date.now() - last.ts < DEDUP_WINDOW_MS) {
         return prev;
       }
@@ -63,11 +95,31 @@ export function HistoryProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
+  const addEntry = useCallback((entry: Omit<HistoryEntry, "id" | "timeISO">) => {
+    add({ sentence: entry.sentence, score: entry.score, model: entry.model });
+  }, [add]);
+
+  const removeEntry = useCallback((id: string) => {
+    setItems((prev) => prev.filter((it) => it.id !== id));
+  }, []);
+
   const clear = useCallback(() => setItems([]), []);
 
-  return <HistoryContext.Provider value={{ items, add, clear }}>{children}</HistoryContext.Provider>;
+  const entries = items.map(toEntry);
+
+  return (
+    <HistoryContext.Provider value={{ items, entries, add, addEntry, removeEntry, clear }}>
+      {children}
+    </HistoryContext.Provider>
+  );
 }
 
 export function useHistory(): HistoryContextValue {
   return useContext(HistoryContext);
+}
+
+/** Back-compat alias for stash components. */
+export function useLocalHistory() {
+  const { entries, addEntry, removeEntry, clear } = useHistory();
+  return { entries, addEntry, removeEntry, clear };
 }
