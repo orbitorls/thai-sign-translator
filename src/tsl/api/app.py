@@ -88,12 +88,23 @@ _translator_cache: dict[str, object] = {}
 
 
 def _build_encoder() -> LandmarkEncoder:
-    """Load the trained encoder weights from disk if available; else random."""
-    enc = LandmarkEncoder(input_dim=len(SELECTED_LANDMARKS) * 3)
+    """Load the trained encoder weights from disk if available; else a
+    deterministic random init (fixed seed) so a saved prototype store stays
+    valid across restarts."""
     weights_path = getattr(config, "ENCODER_WEIGHTS_PATH", None)
     if weights_path and os.path.exists(weights_path):
+        enc = LandmarkEncoder(input_dim=len(SELECTED_LANDMARKS) * 3)
         state = torch.load(weights_path, map_location="cpu", weights_only=True)
         enc.load_state_dict(state)
+    else:
+        # No trained encoder shipped — seed so the random weights are
+        # reproducible (prototypes.pt embeddings remain valid after restart).
+        gen_state = torch.random.get_rng_state()
+        torch.manual_seed(20260629)
+        try:
+            enc = LandmarkEncoder(input_dim=len(SELECTED_LANDMARKS) * 3)
+        finally:
+            torch.random.set_rng_state(gen_state)
     enc.eval()
     return enc
 
