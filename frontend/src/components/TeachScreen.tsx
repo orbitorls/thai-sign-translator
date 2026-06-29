@@ -43,6 +43,16 @@ export function TeachScreen({ capture, active }: TeachScreenProps) {
     return () => clearInterval(id);
   }, [capture.recording]);
 
+  // The shared capture may arrive already "recording" (the camera tab leaves it
+  // on). Discard that stale buffer on mount, and stop on unmount so the camera
+  // tab can't inherit a buffer we started. start()/stop() touch only stable
+  // refs/setters, so this is safe.
+  useEffect(() => {
+    if (capture.recording) capture.stop();
+    return () => { capture.stop(); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const onRecordToggle = useCallback(() => {
     if (capture.recording) {
       const { frames } = capture.stop();
@@ -51,11 +61,12 @@ export function TeachScreen({ capture, active }: TeachScreenProps) {
       if (mode === "teach") teach.addClip(frames);
       else predict.run(frames);
     } else {
+      if (mode === "recognize" && signs.length === 0) return;
       predict.reset();
       setFrameCount(0);
       capture.start();
     }
-  }, [capture, mode, teach, predict]);
+  }, [capture, mode, signs, teach, predict]);
 
   const onSave = useCallback(async () => {
     const ok = await teach.submit(name);
@@ -84,12 +95,14 @@ export function TeachScreen({ capture, active }: TeachScreenProps) {
       <div className="teach-mode-switch">
         <button
           className={`glass-chip${mode === "teach" ? " on" : ""}`}
+          aria-pressed={mode === "teach"}
           onClick={() => { setMode("teach"); predict.reset(); }}
         >
           {th.teachModeTab}
         </button>
         <button
           className={`glass-chip${mode === "recognize" ? " on" : ""}`}
+          aria-pressed={mode === "recognize"}
           onClick={() => { setMode("recognize"); }}
         >
           {th.recognizeModeTab}
@@ -97,6 +110,8 @@ export function TeachScreen({ capture, active }: TeachScreenProps) {
       </div>
 
       <p className="teach-note">{th.untrainedEncoderNote}</p>
+
+      {mode === "teach" && <p className="teach-hint">{th.teachIntro}</p>}
 
       <div className="teach-record-row">
         <RecordButton
@@ -142,8 +157,10 @@ export function TeachScreen({ capture, active }: TeachScreenProps) {
           <button className="glass-action-btn" disabled={!canSave} onClick={onSave}>
             {teach.status === "saving" ? th.savingSign : th.saveSign}
           </button>
-          {teach.status === "saved" && <p className="teach-ok">{th.signSaved}</p>}
-          {teach.status === "error" && <p className="teach-err">{teach.error ?? th.saveSignError}</p>}
+          <div aria-live="polite">
+            {teach.status === "saved" && <p className="teach-ok">{th.signSaved}</p>}
+            {teach.status === "error" && <p className="teach-err">{teach.error ?? th.saveSignError}</p>}
+          </div>
         </>
       ) : (
         <div className="teach-recognize-result" aria-live="polite">

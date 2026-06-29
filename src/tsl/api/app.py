@@ -226,7 +226,10 @@ def _persist_store(store) -> None:
 def predict(req: PredictRequest, recognizer: Recognizer = Depends(get_recognizer)) -> PredictResponse:
     raw = _raw_frames_to_array(req.frames)
     seq_norm = normalize_sequence(raw)
-    result = recognizer.recognize(seq_norm)
+    try:
+        result = recognizer.recognize(seq_norm)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
     topk = [{"word": w, "score": float(s)} for w, s in result["topk"]]
     return PredictResponse(word=result["word"], score=float(result["score"]), topk=topk)
 
