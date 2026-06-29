@@ -11,6 +11,9 @@ fastdtw>=0.3.4
 scikit-learn>=1.4.0
 matplotlib>=3.8.0
 pydantic>=2.6.0
-transformers>=4.40,<5
+# PoseT5 checkpoint (SLT_V3) is exported with transformers 5.x; tokenizer
+# config uses the 5.x format and will not load on 4.x. Do NOT install torchao
+# alongside torch<2.6 — it eagerly imports and breaks the transformers MT5 path.
+transformers>=5,<6
 sentencepiece>=0.2.0
 sacrebleu>=2.4.0
