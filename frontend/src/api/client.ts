@@ -85,3 +85,42 @@ export async function translate(params: TranslateParams): Promise<TranslateResul
   });
   return _handleResponse<TranslateResult>(resp);
 }
+
+export interface PredictResult {
+  word: string;
+  score: number;
+  topk: { word: string; score: number }[];
+}
+
+export async function trainCustomSign(
+  name: string,
+  clips: number[][][][]
+): Promise<{ name: string; num_clips: number; total_signs: number }> {
+  const resp = await fetch("/train-custom-sign", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name, clips }),
+  });
+  return _handleResponse(resp);
+}
+
+export async function predictSign(frames: number[][][]): Promise<PredictResult> {
+  const resp = await fetch("/predict", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ frames }),
+  });
+  return _handleResponse<PredictResult>(resp);
+}
+
+export async function getSigns(): Promise<{ signs: string[] }> {
+  const resp = await fetch("/signs");
+  return _handleResponse<{ signs: string[] }>(resp);
+}
+
+export async function deleteSign(
+  name: string
+): Promise<{ name: string; total_signs: number }> {
+  const resp = await fetch(`/signs/${encodeURIComponent(name)}`, { method: "DELETE" });
+  return _handleResponse(resp);
+}
