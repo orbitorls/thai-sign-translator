@@ -31,6 +31,7 @@ from tsl.api.schemas import (
     PredictResponse,
     TrainSignRequest,
     TrainSignResponse,
+    DeleteSignResponse,
     TranslateSentenceRequest,
     TranslateSentenceResponse,
     TranslateVideoRequest,
@@ -247,6 +248,15 @@ def train_custom_sign(
 @app.get("/signs")
 def list_signs(store: PrototypeStore = Depends(get_store)) -> dict:
     return {"signs": store.names()}
+
+
+@app.delete("/signs/{name}", response_model=DeleteSignResponse)
+def delete_sign(name: str, store: PrototypeStore = Depends(get_store)) -> DeleteSignResponse:
+    if name not in store.names():
+        raise HTTPException(status_code=404, detail=f"unknown sign {name!r}")
+    store.remove_sign(name)
+    _persist_store(store)
+    return DeleteSignResponse(name=name, total_signs=len(store.names()))
 
 
 @app.get("/models", response_model=ModelsResponse, summary="List selectable models")

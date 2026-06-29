@@ -11,6 +11,9 @@ class StubStore:
     def add_sign(self, name, clips):
         self._signs[name] = clips
 
+    def remove_sign(self, name):
+        self._signs.pop(name, None)
+
     def names(self):
         return list(self._signs.keys())
 
@@ -42,5 +45,29 @@ def test_signs_lists_names():
         resp = client.get("/signs")
         assert resp.status_code == 200
         assert resp.json() == {"signs": ["existing"]}
+    finally:
+        app.dependency_overrides.clear()
+
+
+def test_delete_sign_removes_and_returns_total():
+    stub = StubStore()
+    app.dependency_overrides[get_store] = lambda: stub
+    try:
+        client = TestClient(app)
+        resp = client.delete("/signs/existing")
+        assert resp.status_code == 200
+        assert resp.json() == {"name": "existing", "total_signs": 0}
+        assert "existing" not in stub.names()
+    finally:
+        app.dependency_overrides.clear()
+
+
+def test_delete_unknown_sign_returns_404():
+    stub = StubStore()
+    app.dependency_overrides[get_store] = lambda: stub
+    try:
+        client = TestClient(app)
+        resp = client.delete("/signs/nope")
+        assert resp.status_code == 404
     finally:
         app.dependency_overrides.clear()
