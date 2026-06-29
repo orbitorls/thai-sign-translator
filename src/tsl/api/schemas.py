@@ -24,6 +24,11 @@ class TrainSignResponse(BaseModel):
     total_signs: int
 
 
+class DeleteSignResponse(BaseModel):
+    name: str
+    total_signs: int
+
+
 class TranslateSentenceRequest(BaseModel):
     frames: list
     feature_schema: str = TSL51_162

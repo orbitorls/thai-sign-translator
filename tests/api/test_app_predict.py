@@ -39,5 +39,22 @@ def test_predict_returns_predict_response_shape(monkeypatch):
         app.dependency_overrides.clear()
 
 
+def test_predict_empty_store_returns_400(monkeypatch):
+    monkeypatch.setattr(appmod, "normalize_sequence", lambda seq: np.zeros((seq.shape[0], 6), dtype=np.float32))
+
+    class EmptyStoreRecognizer:
+        def recognize(self, seq_norm):
+            raise ValueError("PrototypeStore is empty — register at least one sign first")
+
+    app.dependency_overrides[get_recognizer] = lambda: EmptyStoreRecognizer()
+    try:
+        client = TestClient(app)
+        frame = [[0.0, 0.0, 0.0] for _ in range(543)]
+        resp = client.post("/predict", json={"frames": [frame, frame, frame]})
+        assert resp.status_code == 400
+    finally:
+        app.dependency_overrides.clear()
+
+
 def test_app_imports_without_checkpoint():
     assert app is not None

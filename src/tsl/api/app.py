@@ -31,6 +31,7 @@ from tsl.api.schemas import (
     PredictResponse,
     TrainSignRequest,
     TrainSignResponse,
+    DeleteSignResponse,
     TranslateSentenceRequest,
     TranslateSentenceResponse,
     TranslateVideoRequest,
@@ -88,12 +89,23 @@ _translator_cache: dict[str, object] = {}
 
 
 def _build_encoder() -> LandmarkEncoder:
-    """Load the trained encoder weights from disk if available; else random."""
-    enc = LandmarkEncoder(input_dim=len(SELECTED_LANDMARKS) * 3)
+    """Load the trained encoder weights from disk if available; else a
+    deterministic random init (fixed seed) so a saved prototype store stays
+    valid across restarts."""
     weights_path = getattr(config, "ENCODER_WEIGHTS_PATH", None)
     if weights_path and os.path.exists(weights_path):
+        enc = LandmarkEncoder(input_dim=len(SELECTED_LANDMARKS) * 3)
         state = torch.load(weights_path, map_location="cpu", weights_only=True)
         enc.load_state_dict(state)
+    else:
+        # No trained encoder shipped — seed so the random weights are
+        # reproducible (prototypes.pt embeddings remain valid after restart).
+        gen_state = torch.random.get_rng_state()
+        torch.manual_seed(20260629)
+        try:
+            enc = LandmarkEncoder(input_dim=len(SELECTED_LANDMARKS) * 3)
+        finally:
+            torch.random.set_rng_state(gen_state)
     enc.eval()
     return enc
 
@@ -214,7 +226,10 @@ def _persist_store(store) -> None:
 def predict(req: PredictRequest, recognizer: Recognizer = Depends(get_recognizer)) -> PredictResponse:
     raw = _raw_frames_to_array(req.frames)
     seq_norm = normalize_sequence(raw)
-    result = recognizer.recognize(seq_norm)
+    try:
+        result = recognizer.recognize(seq_norm)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
     topk = [{"word": w, "score": float(s)} for w, s in result["topk"]]
     return PredictResponse(word=result["word"], score=float(result["score"]), topk=topk)
 
@@ -236,6 +251,15 @@ def train_custom_sign(
 @app.get("/signs")
 def list_signs(store: PrototypeStore = Depends(get_store)) -> dict:
     return {"signs": store.names()}
+
+
+@app.delete("/signs/{name}", response_model=DeleteSignResponse)
+def delete_sign(name: str, store: PrototypeStore = Depends(get_store)) -> DeleteSignResponse:
+    if name not in store.names():
+        raise HTTPException(status_code=404, detail=f"unknown sign {name!r}")
+    store.remove_sign(name)
+    _persist_store(store)
+    return DeleteSignResponse(name=name, total_signs=len(store.names()))
 
 
 @app.get("/models", response_model=ModelsResponse, summary="List selectable models")

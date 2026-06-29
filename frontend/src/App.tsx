@@ -14,6 +14,7 @@ import { BottomNav, Screen } from "./components/BottomNav";
 import { HistoryScreen } from "./components/HistoryScreen";
 import { SettingsScreen } from "./components/SettingsScreen";
 import { DevMetricsOverlay } from "./components/DevMetricsOverlay";
+import { TeachScreen } from "./components/TeachScreen";
 
 const CONFIDENCE_FLOOR = 0.3;
 const HANDS_GONE_DEBOUNCE_MS = 800;
@@ -49,7 +50,7 @@ function AppShell() {
   // Pause MediaPipe when the tab is backgrounded or the user is not on the camera screen.
   useEffect(() => {
     const apply = () => {
-      const shouldRun = !document.hidden && screen === "camera";
+      const shouldRun = !document.hidden && (screen === "camera" || screen === "teach");
       if (shouldRun) captureRef.current.resume();
       else captureRef.current.pause();
     };
@@ -225,6 +226,11 @@ function AppShell() {
       {screen === "settings" && (
         <div className="screen-overlay">
           <SettingsScreen />
+        </div>
+      )}
+      {screen === "teach" && (
+        <div className="screen-overlay">
+          <TeachScreen capture={capture} active={screen === "teach"} />
         </div>
       )}
 
